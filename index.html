@@ -4,146 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>صيدليات د. مراد صادق</title>
-    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary-orange: #ff6624; --silver-text: #d1d1d1; --dark-bg: #000000; --card-bg: #121212; }
-        body { background: var(--dark-bg); color: var(--silver-text); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        :root { --primary: #ff6624; --silver: #d1d1d1; --bg: #000; --card: #121212; }
+        body { background: var(--bg); color: var(--silver); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
         
         /* شاشة الترحيب */
-        #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark-bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
-        #splash img { width: 80%; max-width: 300px; object-fit: contain; }
-        .loader-bar { width: 60%; height: 4px; background: #222; margin-top: 25px; border-radius: 10px; overflow: hidden; }
-        .loader-progress { width: 0%; height: 100%; background: var(--primary-orange); animation: load 1.5s forwards; }
-        @keyframes load { to { width: 100%; } }
-
-        /* القائمة الجانبية */
-        .sidebar { width: 280px; background: var(--card-bg); height: 100vh; position: fixed; right: 0; top: 0; border-left: 1px solid #222; transition: transform 0.3s ease; z-index: 999; }
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        #splash img { width: 250px; object-fit: contain; }
+        
+        /* القائمة والواجهة */
+        #toggleBtn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .sidebar { width: 280px; background: var(--card); height: 100vh; position: fixed; right: 0; top: 0; border-left: 1px solid #222; transition: 0.3s; z-index: 999; }
         .sidebar.hidden { transform: translateX(100%); }
-        .logo-box { padding: 30px 15px; text-align: center; }
-        .logo-box img { width: 100%; max-width: 180px; height: auto; }
+        .logo-box { padding: 40px 20px; text-align: center; }
+        .logo-box img { width: 100%; max-width: 180px; }
 
-        /* الأزرار */
-        #toggleBtn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--primary-orange); color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
-        .content { margin-right: 280px; padding: 15px; transition: 0.3s; margin-top: 60px; }
-        .content.full { margin-right: 0; }
+        .main { margin-right: 280px; height: 100vh; display: flex; flex-direction: column; transition: 0.3s; }
+        .main.full { margin-right: 0; }
+        
+        .header-search { padding: 60px 15px 15px; background: var(--bg); }
+        .search-input { background: #1a1a1a; border: 2px solid #333; padding: 15px; border-radius: 12px; color: #fff; width: 100%; font-family: 'Cairo'; font-size: 18px; outline: none; box-sizing: border-box; }
+        .search-input:focus { border-color: var(--primary); }
 
-        /* البحث */
-        .search-box { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 12px; color: #fff; width: 100%; margin-bottom: 15px; font-family: 'Cairo'; box-sizing: border-box; font-size: 16px; outline: none; }
-        .search-box:focus { border-color: var(--primary-orange); box-shadow: 0 0 8px rgba(255,102,36,0.3); }
+        /* منطقة القائمة فائقة السرعة */
+        #listBody { flex: 1; overflow-y: auto; padding: 0 15px 20px; }
+        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 8px; border-radius: 10px; border-right: 4px solid var(--primary); }
+        .item-info { flex: 1; }
+        .item-info b { display: block; color: #fff; font-size: 16px; }
+        .item-info span { font-size: 13px; color: #666; }
+        .item-price { color: var(--primary); font-weight: bold; font-size: 20px; margin-right: 15px; }
+        .cam-btn { color: var(--primary); font-size: 22px; margin-left: 15px; cursor: pointer; }
 
-        /* الجدول المطور */
-        .list-container { background: var(--card-bg); border-radius: 15px; border: 1px solid #222; overflow: hidden; }
-        .row { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #222; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .info { flex: 1; }
-        .info b { display: block; color: #fff; font-size: 15px; margin-bottom: 4px; }
-        .info small { color: #666; font-size: 12px; }
-        .price { color: var(--primary-orange); font-weight: bold; font-size: 18px; min-width: 80px; text-align: left; }
-        .img-icon { color: var(--primary-orange); margin-left: 12px; font-size: 20px; cursor: pointer; }
-
-        @media (max-width: 768px) { .content { margin-right: 0; } .sidebar { width: 260px; } }
+        @media (max-width: 768px) { .main { margin-right: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="splash">
-        <img src="logo.png" alt="Logo">
-        <div class="loader-bar"><div class="loader-progress"></div></div>
-    </div>
+    <div id="splash"><img src="logo.png"></div>
 
     <button id="toggleBtn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
     <div class="sidebar" id="sidebar">
-        <div class="logo-box"><img src="logo.png" alt="Logo"></div>
-        <div style="padding: 20px;">
-            <button class="search-box" style="background: var(--primary-orange); color: #000; font-weight: bold;" onclick="doSync()">
-                <i class="fas fa-sync-alt"></i> تحديث فوري
+        <div class="logo-box"><img src="logo.png"></div>
+        <div style="padding: 20px; text-align: center;">
+            <button onclick="doSync()" style="background:var(--primary); border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">
+                <i class="fas fa-sync"></i> تحديث البيانات
             </button>
-            <p id="syncTime" style="font-size: 11px; text-align: center; color: #555;"></p>
+            <p id="syncStatus" style="font-size:12px; color:#555; margin-top:10px;"></p>
         </div>
     </div>
 
-    <div class="content" id="mainContent">
-        <input type="text" id="smartSearch" class="search-box" placeholder="ابحث بالاسم أو الكود..." oninput="filterData()">
-        <div class="list-container" id="listBody"></div>
-        <div id="loadMoreTrigger" style="height: 20px;"></div>
+    <div class="main" id="mainArea">
+        <div class="header-search">
+            <input type="text" id="searchInput" class="search-input" placeholder="ابحث مثل جوجل (اسم أو كود)..." oninput="instantSearch()">
+        </div>
+        <div id="listBody"></div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec"; 
-        let fullData = [];
-        let filteredData = [];
-        let displayLimit = 40;
+        const API_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec";
+        let masterData = [];
+        let viewData = [];
 
         window.onload = () => {
-            setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 1500);
-            const cached = localStorage.getItem('pharmacyData');
-            if (cached) {
-                fullData = JSON.parse(cached);
-                filteredData = [...fullData].slice(1);
-                document.getElementById('syncTime').innerText = "آخر مزامنة: " + localStorage.getItem('lastSyncTime');
-                renderList();
+            const saved = localStorage.getItem('pharmacyData');
+            if (saved) {
+                masterData = JSON.parse(saved).slice(1); // حذف الهيدر
+                instantSearch(); 
+                document.getElementById('syncStatus').innerText = "آخر مزامنة: " + localStorage.getItem('lastSyncTime');
             } else { doSync(); }
+            setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(()=> document.getElementById('splash').remove(), 500); }, 1500);
         };
 
-        function renderList(append = false) {
-            const container = document.getElementById('listBody');
-            if (!append) container.innerHTML = '';
-            
-            const toShow = filteredData.slice(append ? container.children.length : 0, (append ? container.children.length : 0) + displayLimit);
-            
-            toShow.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'row';
-                div.innerHTML = `
-                    <i class="fas fa-camera img-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch', '_blank')"></i>
-                    <div class="info">
-                        <b>${item[1]}</b>
-                        <small>كود: ${item[0]}</small>
-                    </div>
-                    <div class="price">${item[2]}</div>
-                `;
-                container.appendChild(div);
+        // نظام بحث جوجل (الكلمات المتقطعة)
+        function instantSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const words = query.split(" "); // تقسيم البحث لكلمات
+
+            // تصفية البيانات: يجب أن يحتوي السطر على كل الكلمات المكتوبة بأي ترتيب
+            viewData = masterData.filter(row => {
+                const rowStr = (row[0] + " " + row[1]).toLowerCase();
+                return words.every(word => rowStr.includes(word));
             });
+
+            renderRows();
         }
 
-        // البحث الذكي والسريع
-        function filterData() {
-            const val = document.getElementById('smartSearch').value.toLowerCase().trim();
-            filteredData = fullData.slice(1).filter(row => 
-                row[0].toString().toLowerCase().includes(val) || 
-                row[1].toString().toLowerCase().includes(val)
-            );
-            renderList();
+        function renderRows() {
+            const container = document.getElementById('listBody');
+            container.innerHTML = ''; // مسح القديم
+            
+            // عرض أول 100 نتيجة فقط للسرعة، والباقي يظهر مع البحث
+            const limit = viewData.slice(0, 100); 
+            
+            const fragment = document.createDocumentFragment();
+            limit.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <i class="fas fa-camera cam-btn" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
+                    <div class="item-info">
+                        <b>${item[1]}</b>
+                        <span>كود: ${item[0]}</span>
+                    </div>
+                    <div class="item-price">${item[2]}</div>
+                `;
+                fragment.appendChild(div);
+            });
+            container.appendChild(fragment);
         }
-
-        // تحميل المزيد عند التمرير لتحت
-        window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
-                if (document.getElementById('listBody').children.length < filteredData.length) {
-                    renderList(true);
-                }
-            }
-        };
 
         async function doSync() {
-            const btn = document.querySelector('.sidebar .search-box');
-            btn.innerHTML = 'جاري التحميل...';
             try {
-                const res = await fetch(WEB_APP_URL + "?action=getData");
-                const result = await res.json();
-                fullData = result.data;
-                localStorage.setItem('pharmacyData', JSON.stringify(fullData));
-                localStorage.setItem('lastSyncTime', result.lastSync);
-                location.reload(); 
-            } catch (e) { alert("خطأ في المزامنة!"); }
+                const res = await fetch(API_URL + "?action=getData");
+                const json = await res.json();
+                localStorage.setItem('pharmacyData', JSON.stringify(json.data));
+                localStorage.setItem('lastSyncTime', json.lastSync);
+                location.reload();
+            } catch (e) { alert("تأكد من اتصال الإنترنت!"); }
         }
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('hidden');
-            document.getElementById('mainContent').classList.toggle('full');
+            document.getElementById('mainArea').classList.toggle('full');
         }
     </script>
 </body>
