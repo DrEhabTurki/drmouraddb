@@ -11,14 +11,12 @@
         :root { --gold: #D4AF37; --bg: #121212; --card: #1E1E1E; }
         body { background: var(--bg); color: #e0e0e0; font-family: 'Cairo', sans-serif; margin: 0; transition: 0.3s; overflow-x: hidden; }
         
-        /* زر التحكم في القائمة الجانبية */
         #toggleBtn {
             position: fixed; top: 15px; right: 15px; z-index: 1000;
             background: var(--gold); color: black; border: none; padding: 10px 15px;
-            border-radius: 8px; cursor: pointer; font-size: 20px;
+            border-radius: 8px; cursor: pointer; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* القائمة الجانبية */
         .sidebar { 
             width: 260px; background: var(--card); height: 100vh; 
             padding: 20px; border-left: 1px solid #333; position: fixed; 
@@ -42,26 +40,25 @@
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
-        /* منطقة المحتوى */
         .content { margin-right: 280px; padding: 20px; transition: margin 0.3s ease; }
         .content.full { margin-right: 20px; }
 
-        /* خانات البحث */
-        .search-section { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; margin-top: 50px; }
+        .search-section { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; margin-top: 60px; }
         .search-box {
             background: var(--card); border: 1px solid #444; padding: 12px;
-            border-radius: 10px; color: white; width: 100%; font-family: 'Cairo';
+            border-radius: 10px; color: white; width: 100%; font-family: 'Cairo'; font-size: 14px;
         }
-        .search-box:focus { border-color: var(--gold); outline: none; }
 
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-        th { background: #252525; color: var(--gold); padding: 15px; text-align: right; }
-        td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
-        tr:hover { background: rgba(212, 175, 55, 0.05); }
+        .table-wrapper { overflow-x: auto; background: var(--card); border-radius: 10px; border: 1px solid #333; min-height: 200px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: #252525; color: var(--gold); padding: 15px; text-align: right; position: sticky; top: 0; }
+        td { padding: 12px; border-bottom: 1px solid #333; font-size: 15px; }
+        .price-cell { color: var(--gold); font-weight: bold; text-align: center; }
 
         @media (max-width: 768px) {
-            .content { margin-right: 10px; }
+            .content { margin-right: 10px; padding: 10px; }
             .search-section { grid-template-columns: 1fr; }
+            .content.full { margin-right: 10px; }
         }
     </style>
 </head>
@@ -74,63 +71,85 @@
             <i class="fas fa-hospital-user fa-3x"></i>
             <h2>صيدليات د. مراد صادق</h2>
         </div>
-        
         <div class="sync-container">
-            <span class="last-sync" id="syncTime">جاري التحميل...</span>
+            <span class="last-sync" id="syncTime">تحميل محلي...</span>
             <button class="btn-sync" onclick="doSync()">
-                <i class="fas fa-sync" id="syncIcon"></i> مزامنة البيانات
+                <i class="fas fa-sync" id="syncIcon"></i> مزامنة (Sync)
             </button>
         </div>
     </div>
 
     <div class="content" id="mainContent">
         <div class="search-section">
-            <input type="text" id="smartSearch" class="search-box" placeholder="بحث ذكي (اسم الدواء بالعربي أو الإنجليزي)..." onkeyup="filterData()">
-            <input type="text" id="codeSearch" class="search-box" placeholder="بحث بالكود المباشر..." onkeyup="filterData()">
+            <input type="text" id="smartSearch" class="search-box" placeholder="بحث ذكي سريع..." onkeyup="filterData()">
+            <input type="text" id="codeSearch" class="search-box" placeholder="كود..." onkeyup="filterData()">
         </div>
-        
-        <div id="tableContainer" style="overflow-x: auto;">تحميل البيانات...</div>
+        <div class="table-wrapper" id="tableContainer">جاري عرض البيانات...</div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec"
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec"; 
         let fullData = [];
 
-        async function loadData() {
-            try {
-                const response = await fetch(WEB_APP_URL + "?action=getData");
-                const result = await response.json();
-                fullData = result.data;
-                document.getElementById('syncTime').innerText = "آخر مزامنة: " + result.lastSync;
+        // 1. الوظيفة المسؤولة عن التحميل السريع جداً
+        function initApp() {
+            const cachedData = localStorage.getItem('pharmacyData');
+            const cachedTime = localStorage.getItem('lastSyncTime');
+
+            if (cachedData) {
+                fullData = JSON.parse(cachedData);
+                document.getElementById('syncTime').innerText = "آخر مزامنة: " + (cachedTime || "غير معروف");
                 renderTable(fullData);
-            } catch (e) {
-                document.getElementById('tableContainer').innerText = "خطأ في الاتصال بالشيت.";
+            } else {
+                doSync(); // إذا كانت أول مرة يفتح فيها البرنامج
             }
         }
 
         function renderTable(data) {
-            if (data.length === 0) return;
+            if (!data || data.length === 0) return;
             let html = '<table><thead><tr>';
             data[0].forEach(header => html += `<th>${header}</th>`);
             html += '</tr></thead><tbody>';
-            
             for (let i = 1; i < data.length; i++) {
                 html += '<tr>';
-                data[i].forEach(cell => html += `<td>${cell}</td>`);
+                data[i].forEach((cell, cellIndex) => {
+                    let className = (cellIndex === 2) ? "price-cell" : "";
+                    html += `<td class="${className}">${cell}</td>`;
+                });
                 html += '</tr>';
             }
             html += '</tbody></table>';
             document.getElementById('tableContainer').innerHTML = html;
         }
 
+        async function doSync() {
+            const icon = document.getElementById('syncIcon');
+            icon.classList.add('fa-spin');
+            try {
+                const response = await fetch(WEB_APP_URL + "?action=getData");
+                const result = await response.json();
+                
+                fullData = result.data;
+                // تخزين البيانات في الموبايل
+                localStorage.setItem('pharmacyData', JSON.stringify(fullData));
+                localStorage.setItem('lastSyncTime', result.lastSync);
+                
+                document.getElementById('syncTime').innerText = "آخر مزامنة: " + result.lastSync;
+                renderTable(fullData);
+            } catch (e) {
+                console.error("Sync failed", e);
+            }
+            icon.classList.remove('fa-spin');
+        }
+
         function filterData() {
             const smartVal = document.getElementById('smartSearch').value.toLowerCase();
             const codeVal = document.getElementById('codeSearch').value.toLowerCase();
-            
+            if (fullData.length === 0) return;
             const filtered = fullData.filter((row, index) => {
-                if (index === 0) return true; // احتفاظ بالعناوين
+                if (index === 0) return true; 
                 const rowString = row.join(" ").toLowerCase();
-                const codeMatch = codeVal === "" || row[0].toString().toLowerCase().includes(codeVal); // يفترض الكود في أول عمود
+                const codeMatch = codeVal === "" || row[0].toString().toLowerCase().includes(codeVal);
                 const smartMatch = rowString.includes(smartVal);
                 return codeMatch && smartMatch;
             });
@@ -138,21 +157,12 @@
         }
 
         function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
-            const mc = document.getElementById('mainContent');
-            sb.classList.toggle('hidden');
-            mc.classList.toggle('full');
+            document.getElementById('sidebar').classList.toggle('hidden');
+            document.getElementById('mainContent').classList.toggle('full');
         }
 
-        async function doSync() {
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('fa-spin');
-            await fetch(WEB_APP_URL + "?action=sync");
-            await loadData();
-            icon.classList.remove('fa-spin');
-        }
-
-        window.onload = loadData;
+        // تشغيل البرنامج فوراً من الذاكرة المحلية
+        window.onload = initApp;
     </script>
 </body>
 </html>
