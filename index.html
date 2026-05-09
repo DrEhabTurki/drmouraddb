@@ -10,11 +10,9 @@
         :root { --primary: #ff6624; --silver: #d1d1d1; --bg: #000; --card: #121212; }
         body { background: var(--bg); color: var(--silver); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
         
-        /* شاشة الترحيب */
         #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
         #splash img { width: 250px; object-fit: contain; }
         
-        /* القائمة والواجهة */
         #toggleBtn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
         .sidebar { width: 280px; background: var(--card); height: 100vh; position: fixed; right: 0; top: 0; border-left: 1px solid #222; transition: 0.3s; z-index: 999; }
         .sidebar.hidden { transform: translateX(100%); }
@@ -28,7 +26,6 @@
         .search-input { background: #1a1a1a; border: 2px solid #333; padding: 15px; border-radius: 12px; color: #fff; width: 100%; font-family: 'Cairo'; font-size: 18px; outline: none; box-sizing: border-box; }
         .search-input:focus { border-color: var(--primary); }
 
-        /* منطقة القائمة فائقة السرعة */
         #listBody { flex: 1; overflow-y: auto; padding: 0 15px 20px; }
         .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 8px; border-radius: 10px; border-right: 4px solid var(--primary); }
         .item-info { flex: 1; }
@@ -43,7 +40,6 @@
 <body>
 
     <div id="splash"><img src="logo.png"></div>
-
     <button id="toggleBtn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
     <div class="sidebar" id="sidebar">
@@ -58,7 +54,7 @@
 
     <div class="main" id="mainArea">
         <div class="header-search">
-            <input type="text" id="searchInput" class="search-input" placeholder="ابحث مثل جوجل (اسم أو كود)..." oninput="instantSearch()">
+            <input type="text" id="searchInput" class="search-input" placeholder="ابحث بالعربي أو الإنجليزي..." oninput="instantSearch()">
         </div>
         <div id="listBody"></div>
     </div>
@@ -68,25 +64,40 @@
         let masterData = [];
         let viewData = [];
 
+        // خريطة تحويل الحروف للبحث المتبادل (Transliteration Map)
+        const charMap = {
+            'a': 'ا', 'b': 'ب', 't': 'ت', 's': 'س', 'j': 'ج', 'h': 'ح', 'x': 'خ', 'd': 'د', 'r': 'ر', 'z': 'ز',
+            's': 'ص', 'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج',
+            'p': 'ب', 'v': 'ف'
+        };
+
         window.onload = () => {
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
-                masterData = JSON.parse(saved).slice(1); // حذف الهيدر
+                masterData = JSON.parse(saved).slice(1);
                 instantSearch(); 
                 document.getElementById('syncStatus').innerText = "آخر مزامنة: " + localStorage.getItem('lastSyncTime');
             } else { doSync(); }
             setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(()=> document.getElementById('splash').remove(), 500); }, 1500);
         };
 
-        // نظام بحث جوجل (الكلمات المتقطعة)
+        function translateQuery(q) {
+            let translated = "";
+            for (let char of q) {
+                translated += charMap[char] || char;
+            }
+            return translated;
+        }
+
         function instantSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const words = query.split(" "); // تقسيم البحث لكلمات
+            const words = query.split(" ");
+            const translatedQuery = translateQuery(query); // محاولة فهم الكلمة لو كتبت بلغة تانية
 
-            // تصفية البيانات: يجب أن يحتوي السطر على كل الكلمات المكتوبة بأي ترتيب
             viewData = masterData.filter(row => {
                 const rowStr = (row[0] + " " + row[1]).toLowerCase();
-                return words.every(word => rowStr.includes(word));
+                // البحث في الأصل وفي الترجمة التقريبية
+                return words.every(word => rowStr.includes(word) || rowStr.includes(translateQuery(word)));
             });
 
             renderRows();
@@ -94,11 +105,8 @@
 
         function renderRows() {
             const container = document.getElementById('listBody');
-            container.innerHTML = ''; // مسح القديم
-            
-            // عرض أول 100 نتيجة فقط للسرعة، والباقي يظهر مع البحث
+            container.innerHTML = '';
             const limit = viewData.slice(0, 100); 
-            
             const fragment = document.createDocumentFragment();
             limit.forEach(item => {
                 const div = document.createElement('div');
