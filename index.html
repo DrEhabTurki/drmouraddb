@@ -3,25 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Mourad Sadek Pharmacies</title>
+    <title>صيدليات د. مراد صادق</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #D4AF37; --bg: #121212; --card: #1E1E1E; }
-        body { background: var(--bg); color: #e0e0e0; font-family: 'Cairo', sans-serif; margin: 0; display: flex; }
+        body { background: var(--bg); color: #e0e0e0; font-family: 'Cairo', sans-serif; margin: 0; transition: 0.3s; overflow-x: hidden; }
         
+        /* زر التحكم في القائمة الجانبية */
+        #toggleBtn {
+            position: fixed; top: 15px; right: 15px; z-index: 1000;
+            background: var(--gold); color: black; border: none; padding: 10px 15px;
+            border-radius: 8px; cursor: pointer; font-size: 20px;
+        }
+
         /* القائمة الجانبية */
         .sidebar { 
-            width: 280px; background: var(--card); height: 100vh; 
-            padding: 20px; border-left: 1px solid #333; position: fixed; right: 0;
+            width: 260px; background: var(--card); height: 100vh; 
+            padding: 20px; border-left: 1px solid #333; position: fixed; 
+            right: 0; top: 0; transition: transform 0.3s ease; z-index: 999;
         }
-        .logo-area { text-align: center; color: var(--gold); margin-bottom: 30px; }
+        .sidebar.hidden { transform: translateX(100%); }
+        
+        .logo-area { text-align: center; color: var(--gold); margin-bottom: 20px; margin-top: 40px; }
+        .logo-area h2 { font-size: 18px; margin-top: 10px; }
         
         .sync-container {
             background: rgba(212, 175, 55, 0.05);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 15px; border-radius: 15px; text-align: center; margin-top: auto;
+            padding: 15px; border-radius: 15px; text-align: center; margin-top: 20px;
         }
         .last-sync { font-size: 11px; color: var(--gold); display: block; margin-bottom: 10px; }
         
@@ -32,50 +43,73 @@
         }
 
         /* منطقة المحتوى */
-        .content { margin-right: 300px; padding: 20px; width: 100%; }
+        .content { margin-right: 280px; padding: 20px; transition: margin 0.3s ease; }
+        .content.full { margin-right: 20px; }
+
+        /* خانات البحث */
+        .search-section { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; margin-top: 50px; }
+        .search-box {
+            background: var(--card); border: 1px solid #444; padding: 12px;
+            border-radius: 10px; color: white; width: 100%; font-family: 'Cairo';
+        }
+        .search-box:focus { border-color: var(--gold); outline: none; }
+
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
         th { background: #252525; color: var(--gold); padding: 15px; text-align: right; }
         td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
+        tr:hover { background: rgba(212, 175, 55, 0.05); }
+
+        @media (max-width: 768px) {
+            .content { margin-right: 10px; }
+            .search-section { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
+    <button id="toggleBtn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+
+    <div class="sidebar" id="sidebar">
         <div class="logo-area">
-            <i class="fas fa-prescription-bottle-alt fa-3x"></i>
-            <h2>Dr.Mourad Pharmacies</h2>
+            <i class="fas fa-hospital-user fa-3x"></i>
+            <h2>صيدليات د. مراد صادق</h2>
         </div>
         
-        <nav>
-            <p><i class="fas fa-home"></i> الرئيسة</p>
-            <p><i class="fas fa-box"></i> المخزن</p>
-        </nav>
-
         <div class="sync-container">
-            <span class="last-sync" id="syncTime">جاري جلب البيانات...</span>
+            <span class="last-sync" id="syncTime">جاري التحميل...</span>
             <button class="btn-sync" onclick="doSync()">
-                <i class="fas fa-sync" id="syncIcon"></i> مزامنة الشيت
+                <i class="fas fa-sync" id="syncIcon"></i> مزامنة البيانات
             </button>
         </div>
     </div>
 
-    <div class="content">
-        <h2 style="color: var(--gold)">قائمة الأدوية</h2>
-        <div id="tableContainer">تحميل البيانات من الشيت...</div>
+    <div class="content" id="mainContent">
+        <div class="search-section">
+            <input type="text" id="smartSearch" class="search-box" placeholder="بحث ذكي (اسم الدواء بالعربي أو الإنجليزي)..." onkeyup="filterData()">
+            <input type="text" id="codeSearch" class="search-box" placeholder="بحث بالكود المباشر..." onkeyup="filterData()">
+        </div>
+        
+        <div id="tableContainer" style="overflow-x: auto;">تحميل البيانات...</div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec"
+        let fullData = [];
 
-        // جلب البيانات فور فتح التطبيق
         async function loadData() {
-            const response = await fetch(WEB_APP_URL + "?action=getData");
-            const result = await response.json();
-            document.getElementById('syncTime').innerText = "آخر مزامنة: " + result.lastSync;
-            renderTable(result.data);
+            try {
+                const response = await fetch(WEB_APP_URL + "?action=getData");
+                const result = await response.json();
+                fullData = result.data;
+                document.getElementById('syncTime').innerText = "آخر مزامنة: " + result.lastSync;
+                renderTable(fullData);
+            } catch (e) {
+                document.getElementById('tableContainer').innerText = "خطأ في الاتصال بالشيت.";
+            }
         }
 
         function renderTable(data) {
+            if (data.length === 0) return;
             let html = '<table><thead><tr>';
             data[0].forEach(header => html += `<th>${header}</th>`);
             html += '</tr></thead><tbody>';
@@ -89,13 +123,33 @@
             document.getElementById('tableContainer').innerHTML = html;
         }
 
+        function filterData() {
+            const smartVal = document.getElementById('smartSearch').value.toLowerCase();
+            const codeVal = document.getElementById('codeSearch').value.toLowerCase();
+            
+            const filtered = fullData.filter((row, index) => {
+                if (index === 0) return true; // احتفاظ بالعناوين
+                const rowString = row.join(" ").toLowerCase();
+                const codeMatch = codeVal === "" || row[0].toString().toLowerCase().includes(codeVal); // يفترض الكود في أول عمود
+                const smartMatch = rowString.includes(smartVal);
+                return codeMatch && smartMatch;
+            });
+            renderTable(filtered);
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const mc = document.getElementById('mainContent');
+            sb.classList.toggle('hidden');
+            mc.classList.toggle('full');
+        }
+
         async function doSync() {
             const icon = document.getElementById('syncIcon');
             icon.classList.add('fa-spin');
             await fetch(WEB_APP_URL + "?action=sync");
-            await loadData(); // إعادة تحميل البيانات بعد المزامنة
+            await loadData();
             icon.classList.remove('fa-spin');
-            alert("تمت المزامنة بنجاح مع شيت جوجل");
         }
 
         window.onload = loadData;
