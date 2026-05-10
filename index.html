@@ -183,5 +183,12 @@
             } catch (e) { alert("حدث خطأ في الاتصال!"); btn.innerText = "تحديث البيانات"; }
         }
     </script>
+    if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('جاهز للعمل أوفلاين', reg))
+      .catch(err => console.log('فشل تسجيل الخدمة', err));
+  });
+}
 </body>
 </html>
