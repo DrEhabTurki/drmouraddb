@@ -13,8 +13,8 @@
         body { background: var(--bg); color: var(--silver); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
 
         /* شاشة الفتح */
-        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; }
-        #splash img { width: 200px; object-fit: contain; }
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; pointer-events: none; }
+        #splash img { width: 220px; object-fit: contain; }
 
         /* الهيدر الثابت */
         header { 
@@ -22,38 +22,38 @@
             background: var(--bg); z-index: 900; padding: 10px; border-bottom: 1px solid #222;
             display: flex; flex-direction: column; align-items: center;
         }
-        .brand-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .brand-box { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
         .brand-box img { height: 60px; width: auto; object-fit: contain; }
-        .brand-box h1 { font-size: 18px; color: #fff; margin: 0; }
+        .brand-box h1 { font-size: 18px; color: #fff; margin: 0; font-weight: 700; }
 
-        .search-row { display: flex; width: 100%; gap: 8px; max-width: 600px; }
-        .search-input { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; font-family: 'Cairo'; outline: none; }
-        .filter-btn { background: var(--primary); border: none; color: #fff; padding: 0 15px; border-radius: 10px; cursor: pointer; }
+        .search-row { display: flex; width: 100%; gap: 8px; max-width: 600px; padding: 0 5px; }
+        .search-input { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px 15px; border-radius: 10px; color: #fff; font-family: 'Cairo'; font-size: 16px; outline: none; }
+        .filter-btn { background: var(--primary); border: none; color: #fff; padding: 0 15px; border-radius: 10px; cursor: pointer; font-size: 18px; }
 
         /* الغطاء والقائمة الجانبية */
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 998; display: none; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 998; display: none; backdrop-filter: blur(4px); }
         .sidebar { 
-            width: 300px; background: var(--card); height: 100vh; position: fixed; 
-            right: 0; top: 0; z-index: 999; transform: translateX(100%); transition: 0.3s;
-            padding: 20px; border-left: 1px solid #333;
+            width: 280px; background: var(--card); height: 100vh; position: fixed; 
+            right: 0; top: 0; z-index: 999; transform: translateX(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 25px 20px; border-left: 1px solid #333;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
 
-        /* خيارات الفلترة داخل القائمة */
         .filter-group { margin-bottom: 20px; }
         .filter-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #fff; }
-        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; font-family: 'Cairo'; }
+        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 12px; border-radius: 8px; font-family: 'Cairo'; outline: none; }
 
         /* النتائج */
-        main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 10px; }
-        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 8px; border-radius: 12px; border: 1px solid #222; }
+        main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 10px; border-radius: 12px; border: 1px solid #222; border-right: 4px solid var(--primary); }
         .item-info { flex: 1; }
-        .item-info b { display: block; color: #fff; font-size: 15px; }
-        .item-price { color: var(--primary); font-weight: bold; font-size: 18px; }
-        .cam-icon { color: var(--primary); font-size: 20px; margin-left: 12px; cursor: pointer; }
+        .item-info b { display: block; color: #fff; font-size: 15px; margin-bottom: 2px; }
+        .item-info span { font-size: 12px; color: #666; }
+        .item-price { color: var(--primary); font-weight: bold; font-size: 20px; min-width: 70px; text-align: left; }
+        .cam-icon { color: var(--primary); font-size: 20px; margin-left: 15px; cursor: pointer; padding: 5px; }
 
-        #syncBtn { background: #222; color: #fff; border: 1px solid #444; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        #syncBtn { background: #222; color: #fff; border: 1px solid #444; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; font-family: 'Cairo'; }
     </style>
 </head>
 <body>
@@ -67,37 +67,24 @@
             <h1>Dr.Mourad Pharmacies</h1>
         </div>
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="بحث ذكي..." oninput="applyFilters()">
+            <input type="text" id="searchInput" class="search-input" placeholder="بحث (عربي/English)..." oninput="applyFilters()">
             <button class="filter-btn" onclick="toggleSidebar()"><i class="fas fa-sliders-h"></i></button>
         </div>
     </header>
 
     <div class="sidebar" id="sidebar">
-        <h3>خيارات الفلترة</h3>
-        
+        <div style="text-align:center; margin-bottom:20px;"><img src="logo.png" style="width:100px; object-fit:contain;"></div>
+        <h3>خيارات الترتيب</h3>
         <div class="filter-group">
-            <label>ترتيب النتائج:</label>
+            <label>ترتيب حسب السعر:</label>
             <select id="sortOrder" class="filter-select" onchange="applyFilters()">
                 <option value="none">افتراضي</option>
-                <option value="priceLow">السعر: من الأقل للأعلى</option>
-                <option value="priceHigh">السعر: من الأعلى للأقل</option>
-                <option value="name">الاسم (أبجدي)</option>
+                <option value="priceLow">من الأقل للأعلى</option>
+                <option value="priceHigh">من الأعلى للأقل</option>
             </select>
         </div>
-
-        <div class="filter-group">
-            <label>نطاق البحث:</label>
-            <select id="searchScope" class="filter-select" onchange="applyFilters()">
-                <option value="all">الكل (اسم وكود)</option>
-                <option value="nameOnly">الاسم فقط</option>
-                <option value="codeOnly">الكود فقط</option>
-            </select>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-        
-        <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث قاعدة البيانات</button>
-        <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></p>
+        <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث البيانات</button>
+        <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:15px;"></p>
     </div>
 
     <main id="listBody"></main>
@@ -107,43 +94,57 @@
         let masterData = [];
         let viewData = [];
 
+        // خريطة تحويل الحروف للبحث المتبادل (English to Arabic)
+        const charMap = {
+            'a': 'ا', 'b': 'ب', 't': 'ت', 's': 'س', 'j': 'ج', 'h': 'ح', 'x': 'خ', 'd': 'د', 'r': 'ر', 'z': 'ز',
+            'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
+        };
+
         window.onload = () => {
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
                 masterData = JSON.parse(saved).slice(1);
                 applyFilters();
-                document.getElementById('syncTime').innerText = "آخر مزامنة: " + localStorage.getItem('lastSyncTime');
+                document.getElementById('syncTime').innerText = "آخر مزامنة: " + (localStorage.getItem('lastSyncTime') || '--');
             } else { doSync(); }
-            setTimeout(() => { document.getElementById('splash').style.opacity='0'; setTimeout(()=>document.getElementById('splash').remove(), 400); }, 1500);
+            
+            setTimeout(() => {
+                const sp = document.getElementById('splash');
+                if(sp){
+                    sp.style.opacity='0';
+                    setTimeout(()=>sp.remove(), 400);
+                }
+            }, 1200);
         };
 
         function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
+            document.getElementById('sidebar').classList.toggle('open');
             const ov = document.getElementById('overlay');
-            const isOpen = sb.classList.toggle('open');
-            ov.style.display = isOpen ? 'block' : 'none';
+            ov.style.display = ov.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function translateWord(w) {
+            let res = "";
+            for (let char of w) { res += charMap[char] || char; }
+            return res;
         }
 
         function applyFilters() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const sort = document.getElementById('sortOrder').value;
-            const scope = document.getElementById('searchScope').value;
             const words = query.split(" ");
 
-            // 1. الفلترة حسب البحث والنطاق
             viewData = masterData.filter(row => {
-                let textToSearch = "";
-                if (scope === "nameOnly") textToSearch = row[1].toString().toLowerCase();
-                else if (scope === "codeOnly") textToSearch = row[0].toString().toLowerCase();
-                else textToSearch = (row[0] + " " + row[1]).toLowerCase();
-
-                return words.every(word => textToSearch.includes(word));
+                const rowStr = (row[0] + " " + row[1]).toLowerCase();
+                // البحث بالكلمة الأصلية + البحث بالترجمة التقريبية
+                return words.every(word => {
+                    const translated = translateWord(word);
+                    return rowStr.includes(word) || rowStr.includes(translated);
+                });
             });
 
-            // 2. الترتيب (Sorting)
             if (sort === "priceLow") viewData.sort((a, b) => parseFloat(a[2]) - parseFloat(b[2]));
             else if (sort === "priceHigh") viewData.sort((a, b) => parseFloat(b[2]) - parseFloat(a[2]));
-            else if (sort === "name") viewData.sort((a, b) => a[1].localeCompare(b[1], 'ar'));
 
             renderRows();
         }
@@ -160,24 +161,26 @@
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
                         <b>${item[1]}</b>
-                        <span style="font-size:12px; color:#666;">كود: ${item[0]}</span>
+                        <span>كود: ${item[0]}</span>
                     </div>
                     <div class="item-price">${item[2]}</div>
                 `;
                 fragment.appendChild(div);
             });
             container.appendChild(fragment);
+            container.scrollTop = 0;
         }
 
         async function doSync() {
-            document.getElementById('syncBtn').innerText = "جاري التحميل...";
+            const btn = document.getElementById('syncBtn');
+            btn.innerText = "جاري التحميل...";
             try {
                 const res = await fetch(API_URL + "?action=getData");
                 const json = await res.json();
                 localStorage.setItem('pharmacyData', JSON.stringify(json.data));
                 localStorage.setItem('lastSyncTime', json.lastSync);
                 location.reload();
-            } catch (e) { alert("خطأ في الاتصال!"); }
+            } catch (e) { alert("حدث خطأ في الاتصال!"); btn.innerText = "تحديث البيانات"; }
         }
     </script>
 </body>
