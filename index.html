@@ -8,78 +8,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #ff6624; --silver: #d1d1d1; --bg: #000; --card: #121212; --header-h: 140px; }
-        
+        :root { --primary: #ff6624; --silver: #d1d1d1; --bg: #000; --card: #121212; --header-h: 150px; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--silver); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
 
-        /* شاشة الفتح المحسنة */
-        #splash { 
-            position: fixed; inset: 0; background: var(--bg); z-index: 10000; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            transition: opacity 0.4s ease-out; pointer-events: none;
-        }
-        #splash img { width: 220px; height: auto; object-fit: contain; margin-bottom: 20px; }
-        .loader { width: 40px; height: 40px; border: 3px solid #333; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* شاشة الفتح */
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; }
+        #splash img { width: 200px; object-fit: contain; }
 
         /* الهيدر الثابت */
         header { 
             position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); 
-            background: var(--bg); z-index: 900; padding: 10px;
+            background: var(--bg); z-index: 900; padding: 10px; border-bottom: 1px solid #222;
             display: flex; flex-direction: column; align-items: center;
-            border-bottom: 1px solid #222;
         }
-        .brand-box { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .brand-box img { height: 50px; width: auto; object-fit: contain; }
-        .brand-box h1 { font-size: 18px; color: #fff; margin: 0; font-weight: 700; letter-spacing: 0.5px; }
+        .brand-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .brand-box img { height: 60px; width: auto; object-fit: contain; }
+        .brand-box h1 { font-size: 18px; color: #fff; margin: 0; }
 
-        /* شريط البحث والفلترة */
-        .search-row { display: flex; width: 100%; gap: 10px; max-width: 600px; }
-        .search-input { 
-            flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px 15px; 
-            border-radius: 10px; color: #fff; font-family: 'Cairo'; font-size: 16px; outline: none; 
-        }
-        .filter-btn { 
-            background: #1a1a1a; border: 1px solid #333; color: var(--primary); 
-            padding: 0 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; 
-        }
+        .search-row { display: flex; width: 100%; gap: 8px; max-width: 600px; }
+        .search-input { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; font-family: 'Cairo'; outline: none; }
+        .filter-btn { background: var(--primary); border: none; color: #fff; padding: 0 15px; border-radius: 10px; cursor: pointer; }
 
-        /* القائمة الجانبية والغطاء الشفاف */
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 998; display: none; backdrop-filter: blur(3px); }
+        /* الغطاء والقائمة الجانبية */
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 998; display: none; }
         .sidebar { 
-            width: 280px; background: var(--card); height: 100vh; position: fixed; 
-            right: 0; top: 0; z-index: 999; transform: translateX(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 1px solid #222; 
+            width: 300px; background: var(--card); height: 100vh; position: fixed; 
+            right: 0; top: 0; z-index: 999; transform: translateX(100%); transition: 0.3s;
+            padding: 20px; border-left: 1px solid #333;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-header { padding: 30px 15px; text-align: center; border-bottom: 1px solid #222; }
-        .sidebar-header img { width: 150px; object-fit: contain; }
+        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; }
 
-        /* منطقة النتائج */
-        main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 15px; }
-        .item { 
-            display: flex; align-items: center; padding: 15px; background: var(--card); 
-            margin-bottom: 10px; border-radius: 12px; border: 1px solid #222;
-        }
+        /* خيارات الفلترة داخل القائمة */
+        .filter-group { margin-bottom: 20px; }
+        .filter-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #fff; }
+        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; font-family: 'Cairo'; }
+
+        /* النتائج */
+        main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 10px; }
+        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 8px; border-radius: 12px; border: 1px solid #222; }
         .item-info { flex: 1; }
-        .item-info b { display: block; color: #fff; font-size: 16px; margin-bottom: 3px; }
-        .item-info span { font-size: 12px; color: #666; }
-        .item-price { color: var(--primary); font-weight: bold; font-size: 19px; margin-left: 10px; }
-        .cam-icon { color: var(--primary); font-size: 20px; padding: 10px; cursor: pointer; }
+        .item-info b { display: block; color: #fff; font-size: 15px; }
+        .item-price { color: var(--primary); font-weight: bold; font-size: 18px; }
+        .cam-icon { color: var(--primary); font-size: 20px; margin-left: 12px; cursor: pointer; }
 
-        #menuBtn { position: fixed; bottom: 20px; right: 20px; z-index: 901; background: var(--primary); color: #fff; border: none; width: 55px; height: 55px; border-radius: 50%; font-size: 20px; box-shadow: 0 4px 15px rgba(255,102,36,0.4); }
+        #syncBtn { background: #222; color: #fff; border: 1px solid #444; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- Splash Screen -->
-    <div id="splash">
-        <img src="logo.png" alt="Logo">
-        <div class="loader"></div>
-    </div>
-
-    <!-- Overlay to close sidebar -->
+    <div id="splash"><img src="logo.png"></div>
     <div id="overlay" onclick="toggleSidebar()"></div>
 
     <header>
@@ -88,24 +67,37 @@
             <h1>Dr.Mourad Pharmacies</h1>
         </div>
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="بحث عربي أو إنجليزي..." oninput="instantSearch()">
-            <button class="filter-btn" onclick="toggleSidebar()"><i class="fas fa-filter"></i></button>
+            <input type="text" id="searchInput" class="search-input" placeholder="بحث ذكي..." oninput="applyFilters()">
+            <button class="filter-btn" onclick="toggleSidebar()"><i class="fas fa-sliders-h"></i></button>
         </div>
     </header>
 
-    <button id="menuBtn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <img src="logo.png" alt="Logo">
-            <h3 style="color:white; margin-top:15px; font-size:14px;">إعدادات الفلترة</h3>
+        <h3>خيارات الفلترة</h3>
+        
+        <div class="filter-group">
+            <label>ترتيب النتائج:</label>
+            <select id="sortOrder" class="filter-select" onchange="applyFilters()">
+                <option value="none">افتراضي</option>
+                <option value="priceLow">السعر: من الأقل للأعلى</option>
+                <option value="priceHigh">السعر: من الأعلى للأقل</option>
+                <option value="name">الاسم (أبجدي)</option>
+            </select>
         </div>
-        <div style="padding: 20px;">
-            <button onclick="doSync()" style="background:var(--primary); border:none; padding:15px; width:100%; border-radius:10px; font-weight:bold; color:white;">
-                <i class="fas fa-sync"></i> تحديث البيانات
-            </button>
-            <p id="syncTime" style="font-size:11px; color:#555; text-align:center; margin-top:10px;"></p>
+
+        <div class="filter-group">
+            <label>نطاق البحث:</label>
+            <select id="searchScope" class="filter-select" onchange="applyFilters()">
+                <option value="all">الكل (اسم وكود)</option>
+                <option value="nameOnly">الاسم فقط</option>
+                <option value="codeOnly">الكود فقط</option>
+            </select>
         </div>
+
+        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+        
+        <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث قاعدة البيانات</button>
+        <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></p>
     </div>
 
     <main id="listBody"></main>
@@ -119,16 +111,10 @@
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
                 masterData = JSON.parse(saved).slice(1);
-                instantSearch();
-                document.getElementById('syncTime').innerText = "آخر مزامنة: " + (localStorage.getItem('lastSyncTime') || 'لا يوجد');
+                applyFilters();
+                document.getElementById('syncTime').innerText = "آخر مزامنة: " + localStorage.getItem('lastSyncTime');
             } else { doSync(); }
-            
-            // إخفاء شاشة الفتح بسلاسة
-            setTimeout(() => {
-                const sp = document.getElementById('splash');
-                sp.style.opacity = '0';
-                setTimeout(() => sp.remove(), 400);
-            }, 1200);
+            setTimeout(() => { document.getElementById('splash').style.opacity='0'; setTimeout(()=>document.getElementById('splash').remove(), 400); }, 1500);
         };
 
         function toggleSidebar() {
@@ -138,14 +124,27 @@
             ov.style.display = isOpen ? 'block' : 'none';
         }
 
-        function instantSearch() {
+        function applyFilters() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const sort = document.getElementById('sortOrder').value;
+            const scope = document.getElementById('searchScope').value;
             const words = query.split(" ");
-            
+
+            // 1. الفلترة حسب البحث والنطاق
             viewData = masterData.filter(row => {
-                const rowStr = (row[0] + " " + row[1]).toLowerCase();
-                return words.every(word => rowStr.includes(word));
+                let textToSearch = "";
+                if (scope === "nameOnly") textToSearch = row[1].toString().toLowerCase();
+                else if (scope === "codeOnly") textToSearch = row[0].toString().toLowerCase();
+                else textToSearch = (row[0] + " " + row[1]).toLowerCase();
+
+                return words.every(word => textToSearch.includes(word));
             });
+
+            // 2. الترتيب (Sorting)
+            if (sort === "priceLow") viewData.sort((a, b) => parseFloat(a[2]) - parseFloat(b[2]));
+            else if (sort === "priceHigh") viewData.sort((a, b) => parseFloat(b[2]) - parseFloat(a[2]));
+            else if (sort === "name") viewData.sort((a, b) => a[1].localeCompare(b[1], 'ar'));
+
             renderRows();
         }
 
@@ -154,32 +153,31 @@
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
             
-            viewData.slice(0, 80).forEach(item => {
+            viewData.slice(0, 100).forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
                         <b>${item[1]}</b>
-                        <span>كود: ${item[0]}</span>
+                        <span style="font-size:12px; color:#666;">كود: ${item[0]}</span>
                     </div>
                     <div class="item-price">${item[2]}</div>
                 `;
                 fragment.appendChild(div);
             });
             container.appendChild(fragment);
-            container.scrollTop = 0;
         }
 
         async function doSync() {
-            document.getElementById('syncTime').innerText = "جاري المزامنة...";
+            document.getElementById('syncBtn').innerText = "جاري التحميل...";
             try {
                 const res = await fetch(API_URL + "?action=getData");
                 const json = await res.json();
                 localStorage.setItem('pharmacyData', JSON.stringify(json.data));
                 localStorage.setItem('lastSyncTime', json.lastSync);
                 location.reload();
-            } catch (e) { alert("تأكد من الإنترنت!"); }
+            } catch (e) { alert("خطأ في الاتصال!"); }
         }
     </script>
 </body>
