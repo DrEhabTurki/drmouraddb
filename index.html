@@ -213,7 +213,6 @@
             
             setTimeout(hideSplash, 600);
 
-            // إغلاق النوافذ عند الضغط خارجها
             window.onclick = function(event) {
                 const altModal = document.getElementById('alternativesModal');
                 const clinModal = document.getElementById('clinicalModal');
@@ -408,7 +407,6 @@
             }
             
             const sheetId = matches[1];
-            // العودة إلى الرابط التلقائي بدون أي gid
             const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
 
             try {
@@ -429,7 +427,6 @@
                     result.push(current.trim());
                     return result;
                 }).filter((row, index) => {
-                    // تخطي سطر العناوين الأول
                     if (index === 0) {
                         const firstCell = row[0] ? row[0].toLowerCase() : '';
                         if (firstCell.includes('كود') || firstCell.includes('code') || firstCell.includes('الرقم')) {
@@ -447,7 +444,7 @@
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة.");
+                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة في الشيت.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
