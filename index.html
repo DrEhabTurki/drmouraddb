@@ -162,5 +162,298 @@
     <main id="listBody"></main>
 
     <script>
-        // السورس الافتراضي المبدئي (شيت جوجل المخصص لك)
-        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL
+        // السورس الافتراضي الاحتياطي
+        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_PLACEHOLDER/edit";
+        let masterData = [];
+        let viewData = [];
+
+        const charMap = {
+            'a': 'ا', 'b': 'ب', 't': 'ت', 's': 'س', 'j': 'ج', 'h': 'ح', 'x': 'خ', 'd': 'د', 'r': 'ر', 'z': 'ز',
+            'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
+        };
+
+        // الفهرس الإكلينيكي العشري المتقدم والمعرب (Drugs.com Offline Criteria)
+        const clinicalDatabase = {
+            'paracetamol': {
+                uses: 'مسكن للآلام الخفيفة إلى المتوسطة وخافض للحرارة لتخفيف الحمى.',
+                mechanism: 'مثبط ضعيف لتصنيع البروستاجلاندينات بشكل أساسي في الجهاز العصبي المركزي (COX-3)، مع تأثير طرفي ضعيف جداً مضاد للالتهاب.',
+                dose: 'البالغون: 500 مجم إلى 1 جم كل 4-6 ساعات عند الحاجة. الحد الأقصى المطلق 4 جم يومياً.',
+                side_effects: 'آمن بشكل عام؛ نادراً ما يحدث رد فعل تحسسي جلدي أو بثور حادة متعممة.',
+                excretion: 'التمثيل الغذائي في الكبد عن طريق الاقتران بالجلوكورونيد والكبريتات؛ وتفرز النواتج في البول.',
+                pregnancy: 'فئة B. يعتبر آمناً بشكل عام؛ استخدم أقل جرعة فعالة ولأقصر فترة ممكنة.',
+                breastfeeding: 'آمن؛ يفرز في لبن الأم بكميات ضئيلة جداً لا تشكل خطورة على الرضيع.',
+                renal: 'معدل تصفية الكرياتينين < 10 مل/دقيقة: يتم زيادة الفاصل الزمني بين الجرعات إلى كل 8 ساعات.',
+                hepatic: 'القصور الحاد: موانع استعمال أو تقييد صارم لتجنب تراكم مركب NAPQI السام للكبد.',
+                interactions: 'يزيد من التأثير المضاد للتخثر للوارفارين؛ تزداد احتمالية السميّة الكبدية مع محفزات CYP2E1 مثل الكحول.'
+            },
+            'amoxicillin': {
+                uses: 'علاج العدوى البكتيرية الحساسة بما في ذلك التهابات الأذن والأنف والحنجرة، الجهاز التنفسي، المسالك البولية، والجلد.',
+                mechanism: 'يرتبط ببروتينات ربط البنسلين (PBPs)، مما يثبط عملية الـ Transpeptidation لجدار الخلية البكتيرية ويؤدي إلى تحللها المباشر (قاتل للبكتيريا).',
+                dose: 'البالغون: 250 مجم إلى 500 مجم كل 8 ساعات، أو 500 مجم إلى 875 مجم كل 12 ساعة.',
+                side_effects: 'غثيان، قيء، إسهال، طفح جلدي تحسسي، صدمة حساسية، وإسهال مرتبطة بـ Clostridioides difficile.',
+                excretion: 'التصفية الكلوية؛ يفرز بشكل أساسي دون تغيير في البول عبر الترشيح الكبيبي والإفراز الأنبيبي.',
+                pregnancy: 'فئة B. آمن للاستخدام؛ لا توجد مخاطر موثقة لتشوهات الأجنة.',
+                breastfeeding: 'آمن؛ متوافق مع الرضاعة الطبيعية، ويجب مراقبة الرضيع بحثاً عن إسهال أو فطريات.',
+                renal: 'معدل الفلترة الكلوية 10-30 مل/دقيقة: بحد أقصى 500 مجم كل 12 ساعة. أقل من 10 مل/دقيقة: بحد أقصى 500 مجم كل 24 ساعة.',
+                hepatic: 'لا توجد حاجة لتعديل الجرعة إلا في حالة وجود قصور حاد مسبق في وظائف الكبد.'
+            },
+            'ibuprofen': {
+                uses: 'تخفيف أعراض الاضطرابات الالتهابية، التهاب المفاصل الروماتويدي، الفصال العظمي، الآلام الخفيفة، وعسر الطمث.',
+                mechanism: 'تثبيط عكسي غير انتقائي لإنزيمات الأكسدة الحلقية (COX-1 و COX-2)، مما يوقف إنتاج البروستاجلاندينات المسؤول عن الألم والالتهاب.',
+                dose: 'البالغون: 200 مجم إلى 400 مجم كل 4-6 ساعات. الجرعة القصوى كمضاد للالتهاب هي 3200 مجم يومياً.',
+                side_effects: 'عسر هضم، قرحة معدية، نزيف في الجهاز الهضمي، إصابة كلوية حادة، احتباس السوائل، وارتفاع ضغط الدم.',
+                excretion: 'التمثيل الغذائي في الكبد عبر إنزيم CYP2C9؛ ويتم التخلص من النواتج عن طريق الكلى.',
+                pregnancy: 'يمنع تماماً في الثلث الثالث من الحمل (خطر الإغلاق المبكر للقناة الشريانية للجنين). فئة B في الثلث الأول والثاني.',
+                breastfeeding: 'متوافق؛ يمر إلى لبن الأم بكميات ضئيلة جداً لا تذكر.',
+                renal: 'تجنب استخدامه في أمراض الكلى المتقدمة؛ حيث يسبب انقباض الشريان الوارد مما يقلل معدل الفلترة الكلوية.',
+                hepatic: 'يجب مراقبته بصرامة في حالات تليف الكبد؛ قد يلزم تقليل الجرعة نظراً لارتفاع نسبة ارتباطه ببروتينات البلازما.',
+                interactions: 'يقلل من تأثير خافضات الضغط (مثل مثبطات ACE ومغلقات بيتا)، ويزيد من مخاطر النزيف مع مضادات التخثر.'
+            }
+        };
+
+        window.onload = () => {
+            const savedUrl = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
+            document.getElementById('sheetUrlInput').value = savedUrl;
+
+            const saved = localStorage.getItem('pharmacyData');
+            if (saved) {
+                try {
+                    masterData = JSON.parse(saved).slice(1);
+                    applyFilters();
+                    document.getElementById('syncTime').innerText = "آخر مزامنة: " + (localStorage.getItem('lastSyncTime') || '--');
+                } catch(e) {
+                    localStorage.removeItem('pharmacyData');
+                }
+            }
+            
+            // إخفاء شاشة الفتح سلاسة
+            setTimeout(() => {
+                const sp = document.getElementById('splash');
+                if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
+            }, 1200);
+        };
+
+        function saveSheetUrl() {
+            const rawUrl = document.getElementById('sheetUrlInput').value.trim();
+            if(rawUrl.includes("docs.google.com/spreadsheets")) {
+                localStorage.setItem('customSheetUrl', rawUrl);
+                alert("تم حفظ رابط الشيت بنجاح! يرجى التأكد أنه (Anyone with the link / Viewer) ثم اضغط تحديث البيانات.");
+            } else { alert("من فضلك أدخل رابط شيت جوجل بشكل صحيح."); }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            const ov = document.getElementById('overlay');
+            ov.style.display = ov.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function translateWord(w) {
+            let res = "";
+            for (let char of w) { res += charMap[char] || char; }
+            return res;
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const sort = document.getElementById('sortOrder').value;
+            const words = query.split(" ");
+
+            viewData = masterData.filter(row => {
+                if(!row || row.length < 3) return false;
+                const rowStr = `${row[0]} ${row[1]} ${row[3] || ''} ${row[4] || ''}`.toLowerCase();
+                return words.every(word => {
+                    const translated = translateWord(word);
+                    return rowStr.includes(word) || rowStr.includes(translated);
+                });
+            });
+
+            if (sort === "priceLow") viewData.sort((a, b) => parseFloat(a[2]) - parseFloat(b[2]));
+            else if (sort === "priceHigh") viewData.sort((a, b) => parseFloat(b[2]) - parseFloat(a[2]));
+
+            renderRows();
+        }
+
+        function renderRows() {
+            const container = document.getElementById('listBody');
+            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            
+            viewData.slice(0, 100).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.onclick = (e) => { if(!e.target.classList.contains('cam-icon')) showAlternatives(item); };
+                
+                div.innerHTML = `
+                    <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
+                    <div class="item-info">
+                        <b>${item[1]}</b>
+                        <span>كود: ${item[0]}</span>
+                        <div class="tags">${item[3] ? '<i class="fas fa-flask"></i> ' + item[3] : ''}</div>
+                    </div>
+                    <div class="item-price">${item[2]}</div>
+                `;
+                fragment.appendChild(div);
+            });
+            container.appendChild(fragment);
+            container.scrollTop = 0;
+        }
+
+        function showAlternatives(selectedItem) {
+            const rawActiveIng = selectedItem[3] ? selectedItem[3].trim() : '';
+            const thClass = selectedItem[4] ? selectedItem[4].trim().toLowerCase() : '';
+
+            document.getElementById('modalDrugName').innerText = selectedItem[1];
+            document.getElementById('modalActiveIng').innerText = rawActiveIng || 'غير مسجلة';
+            document.getElementById('modalClass').innerText = selectedItem[4] || 'غير مسجلة';
+
+            const btnContainer = document.getElementById('ingredientButtons');
+            btnContainer.innerHTML = '';
+            
+            if(rawActiveIng) {
+                const ingredients = rawActiveIng.split(/\s*(?:\+|\bplus\b|,|and)\s*/i);
+                ingredients.forEach(ing => {
+                    const cleanName = ing.trim();
+                    if(cleanName) {
+                        btnContainer.innerHTML += `
+                            <button class="ing-btn" onclick="openClinicalInfo('${cleanName.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-microscope"></i> ${cleanName}
+                            </button>
+                        `;
+                    }
+                });
+            } else {
+                btnContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مادة فعالة مسجلة لعرض الفهرس.</p>';
+            }
+
+            const exactContainer = document.getElementById('exactMatches');
+            const classContainer = document.getElementById('classMatches');
+            exactContainer.innerHTML = ''; classContainer.innerHTML = '';
+
+            let exactCount = 0; let classCount = 0;
+            const activeIngLower = rawActiveIng.toLowerCase();
+
+            masterData.forEach(item => {
+                if (item[0] === selectedItem[0]) return;
+                const currentActive = item[3] ? item[3].trim().toLowerCase() : '';
+                const currentClass = item[4] ? item[4].trim().toLowerCase() : '';
+
+                if (activeIngLower && currentActive === activeIngLower) {
+                    exactCount++;
+                    exactContainer.innerHTML += `<div class="sub-item"><span>${item[1]}</span><i>${item[2]} ج.م</i></div>`;
+                } else if (thClass && currentClass === thClass) {
+                    classCount++;
+                    classContainer.innerHTML += `<div class="sub-item"><span>${item[1]} <small style="color:#666">(${item[3] || ''})</small></span><i>${item[2]} ج.م</i></div>`;
+                }
+            });
+
+            if(exactCount === 0) exactContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مثائل مطابقة مسجلة.</p>';
+            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية مسجلة.</p>';
+
+            document.getElementById('alternativesModal').style.display = 'block';
+        }
+
+        function openClinicalInfo(ingName) {
+            const cleanKey = ingName.toLowerCase().trim();
+            document.getElementById('clinicalIngName').innerText = ingName;
+            const grid = document.getElementById('clinicalDataGrid');
+            grid.innerHTML = '';
+
+            const data = clinicalDatabase[cleanKey] || {
+                uses: `مؤشر للاستخدام العلاجي النوعي وفقاً لدليل مونوغراف المادة الفعالة ${ingName}.`,
+                mechanism: `تعمل من خلال مسارات جزيئية مستهدفة ومحددة تحت الفئة الفسيولوجية والدوائية للمادة.`,
+                dose: 'يرجى مراجعة معايير المونوغراف الطبي الخاص بحالة المريض السريرية والبروتوكول المعتمد.',
+                side_effects: 'تفاعلات فرط الحساسية، اضطرابات في الجهاز الهضمي، أو آثار جانبية مرتبطة بالفئة الدوائية.',
+                excretion: 'تخضع للتصفية والتمثيل الجسدي القياسي مع تتبع مسار الإخراج الكلوي أو الصفراوي.',
+                pregnancy: 'مراجعة معايير المخاطر والفوائد السريرية الخاصة بكل مرحلة حمل بشكل دقيق.',
+                breastfeeding: 'إفراز المادة في لبن الأم غير محدد بدقة؛ يجب توخي الحذر الإكلينيكي والاستشارة.',
+                renal: 'يتم التعديل بناءً على معدل الفلترة الكبيبية (GFR) إذا استدعت الحالة وجود قصور كلوي.',
+                hepatic: 'مراقبة إنزيمات الكبد بانتظام في حالات القصور الكبدي المسبق تفادياً للتراكم السمّي.',
+                interactions: 'تقييم شامل للمريض في حالة الاستخدام المتزامن مع أدوية تعدل إنزيمات الكبد أو عالية الارتباط بالبروتينات.'
+            };
+
+            const labels = {
+                uses: 'الاستخدامات (Uses)',
+                mechanism: 'ميكانيكية العمل (Mechanism of Action)',
+                dose: 'الجرعة الموصى بها (Recommended Dose)',
+                side_effects: 'الأعراض الجانبية (Side Effects)',
+                excretion: 'الإخراج والتخلص من الدواء (Excretion)',
+                pregnancy: 'الحمل (Pregnancy)',
+                breastfeeding: 'الرضاعة الطبيعية (Breastfeeding)',
+                renal: 'القصور الكلوي (Renal Impairment)',
+                hepatic: 'القصور الكبدي (Hepatic Impairment)',
+                interactions: 'التفاعلات الدوائية (Drug-Drug Interactions)'
+            };
+
+            for (let key in labels) {
+                grid.innerHTML += `
+                    <div class="clinical-row">
+                        <strong>${labels[key]}</strong>
+                        <p>${data[key] || 'لم يتم تحديد بيانات موثقة.'}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('clinicalModal').style.display = 'block';
+        }
+
+        function closeClinicalModal() { document.getElementById('clinicalModal').style.display = 'none'; }
+        function closeModal() { document.getElementById('alternativesModal').style.display = 'none'; }
+
+        async function doSync() {
+            const btn = document.getElementById('syncBtn');
+            btn.innerText = "جاري التحميل...";
+            
+            const currentSheetUrl = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
+            
+            // استخراج الـ ID الخاص بالشيت بذكاء من الرابط المباشر للمتصفح
+            const matches = currentSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (!matches || !matches[1]) {
+                alert("رابط الشيت الحالي غير صحيح أو غير مكتمل!");
+                btn.innerText = "تحديث البيانات";
+                return;
+            }
+            
+            const sheetId = matches[1];
+            // استخدام رابط الـ CSV المجاني والمباشر لجوجل بدون سيرفرات وسكريبتات
+            const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+
+            try {
+                const res = await fetch(directCsvUrl);
+                if(!res.ok) throw new Error("Network response error");
+                const text = await res.text();
+                
+                // تحويل بيانات الـ CSV المباشرة إلى مصفوفة برمجية سريعة
+                const lines = text.split("\n");
+                const parsedData = lines.map(line => {
+                    // معالجة الفواصل داخل علامات التنصيص
+                    let result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        let char = line[i];
+                        if (char === '"') { inQuotes = !inQuotes; }
+                        else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                        else { current += char; }
+                    }
+                    result.push(current.trim());
+                    return result;
+                });
+
+                if(parsedData.length > 1) {
+                    localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString('ar-EG') + " - " + now.toLocaleDateString('ar-EG');
+                    localStorage.setItem('lastSyncTime', timeStr);
+                    location.reload();
+                } else {
+                    alert("الشيت فارغ أو يحتوي على بيانات غير صحيحة!");
+                    btn.innerText = "تحديث البيانات";
+                }
+            } catch (e) { 
+                alert("فشلت المزامنة! تأكد أن خيار المشاركة في الشيت مضبوط على: (أي شخص لديه الرابط - مشاهد) للوصول أوفلاين."); 
+                btn.innerText = "تحديث البيانات"; 
+            }
+        }
+    </script>
+</body>
+</html>
