@@ -46,12 +46,24 @@
 
         /* النتائج */
         main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
-        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 10px; border-radius: 12px; border: 1px solid #222; border-right: 4px solid var(--primary); }
+        .item { display: flex; align-items: center; padding: 15px; background: var(--card); margin-bottom: 10px; border-radius: 12px; border: 1px solid #222; border-right: 4px solid var(--primary); cursor: pointer; }
         .item-info { flex: 1; }
         .item-info b { display: block; color: #fff; font-size: 15px; margin-bottom: 2px; }
-        .item-info span { font-size: 12px; color: #666; }
+        .item-info span { font-size: 12px; color: #666; display: block; }
+        .item-info .tags { font-size: 11px; color: var(--primary); margin-top: 4px; }
         .item-price { color: var(--primary); font-weight: bold; font-size: 20px; min-width: 70px; text-align: left; }
         .cam-icon { color: var(--primary); font-size: 20px; margin-left: 15px; cursor: pointer; padding: 5px; }
+
+        /* نافذة البدائل والمثائل المنبثقة */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; padding: 20px; overflow-y: auto; }
+        .modal-content { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; max-width: 600px; margin: 40px auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-header h2 { color: #fff; font-size: 18px; margin: 0; }
+        .close-modal { color: var(--primary); font-size: 24px; cursor: pointer; }
+        .section-title { color: var(--primary); font-size: 14px; margin-top: 15px; margin-bottom: 8px; border-right: 3px solid var(--primary); padding-right: 8px; }
+        .sub-item { display: flex; justify-content: space-between; background: #1a1a1a; padding: 10px; margin-bottom: 5px; border-radius: 6px; font-size: 14px; }
+        .sub-item span { color: #fff; }
+        .sub-item i { color: var(--primary); }
 
         #syncBtn { background: #222; color: #fff; border: 1px solid #444; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; font-family: 'Cairo'; }
     </style>
@@ -67,7 +79,7 @@
             <h1>Dr.Mourad Pharmacies</h1>
         </div>
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="بحث (عربي/English)..." oninput="applyFilters()">
+            <input type="text" id="searchInput" class="search-input" placeholder="بحث بالاسم، الكود، المادة أو الفئة..." oninput="applyFilters()">
             <button class="filter-btn" onclick="toggleSidebar()"><i class="fas fa-sliders-h"></i></button>
         </div>
     </header>
@@ -87,6 +99,25 @@
         <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:15px;"></p>
     </div>
 
+    <div id="alternativesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalDrugName">اسم الدواء</h2>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <div>
+                <p style="font-size: 13px; margin: 0;">المادة الفعالة: <span id="modalActiveIng" style="color:#fff;"></span></p>
+                <p style="font-size: 13px; margin: 5px 0 0 0;">المجموعة الدوائية: <span id="modalClass" style="color:var(--primary);"></span></p>
+            </div>
+            
+            <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
+            <div id="exactMatches"></div>
+
+            <div class="section-title">بدائل من نفس المجموعة الدوائية</div>
+            <div id="classMatches"></div>
+        </div>
+    </div>
+
     <main id="listBody"></main>
 
     <script>
@@ -94,7 +125,6 @@
         let masterData = [];
         let viewData = [];
 
-        // خريطة تحويل الحروف للبحث المتبادل (English to Arabic)
         const charMap = {
             'a': 'ا', 'b': 'ب', 't': 'ت', 's': 'س', 'j': 'ج', 'h': 'ح', 'x': 'خ', 'd': 'د', 'r': 'ر', 'z': 'ز',
             'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
@@ -110,10 +140,7 @@
             
             setTimeout(() => {
                 const sp = document.getElementById('splash');
-                if(sp){
-                    sp.style.opacity='0';
-                    setTimeout(()=>sp.remove(), 400);
-                }
+                if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
             }, 1200);
         };
 
@@ -135,8 +162,8 @@
             const words = query.split(" ");
 
             viewData = masterData.filter(row => {
-                const rowStr = (row[0] + " " + row[1]).toLowerCase();
-                // البحث بالكلمة الأصلية + البحث بالترجمة التقريبية
+                // البحث الآن يشمل: الكود[0]، الاسم[1]، المادة الفعالة[3]، والمجموعة[4]
+                const rowStr = `${row[0]} ${row[1]} ${row[3] || ''} ${row[4] || ''}`.toLowerCase();
                 return words.every(word => {
                     const translated = translateWord(word);
                     return rowStr.includes(word) || rowStr.includes(translated);
@@ -157,11 +184,19 @@
             viewData.slice(0, 100).forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'item';
+                // عند الضغط على الكارت يفتح نافذة البدائل
+                div.onclick = (e) => {
+                    if(!e.target.classList.contains('cam-icon')) {
+                        showAlternatives(item);
+                    }
+                };
+                
                 div.innerHTML = `
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
                         <b>${item[1]}</b>
                         <span>كود: ${item[0]}</span>
+                        <div class="tags">${item[3] ? '<i class="fas fa-flask"></i> ' + item[3] : ''}</div>
                     </div>
                     <div class="item-price">${item[2]}</div>
                 `;
@@ -169,6 +204,60 @@
             });
             container.appendChild(fragment);
             container.scrollTop = 0;
+        }
+
+        // محرك عرض المثائل والبدائل الذكي
+        function showAlternatives(selectedItem) {
+            const activeIng = selectedItem[3] ? selectedItem[3].trim().toLowerCase() : '';
+            const thClass = selectedItem[4] ? selectedItem[4].trim().toLowerCase() : '';
+
+            document.getElementById('modalDrugName').innerText = selectedItem[1];
+            document.getElementById('modalActiveIng').innerText = selectedItem[3] || 'غير مسجلة';
+            document.getElementById('modalClass').innerText = selectedItem[4] || 'غير مسجلة';
+
+            const exactContainer = document.getElementById('exactMatches');
+            const classContainer = document.getElementById('classMatches');
+            exactContainer.innerHTML = '';
+            classContainer.innerHTML = '';
+
+            let exactCount = 0;
+            let classCount = 0;
+
+            masterData.forEach(item => {
+                // تخطي نفس الدواء المختار
+                if (item[0] === selectedItem[0]) return;
+
+                const currentActive = item[3] ? item[3].trim().toLowerCase() : '';
+                const currentClass = item[4] ? item[4].trim().toLowerCase() : '';
+
+                // 1. تصفية المثائل (نفس المادة الفعالة تماماً)
+                if (activeIng && currentActive === activeIng) {
+                    exactCount++;
+                    exactContainer.innerHTML += `
+                        <div class="sub-item">
+                            <span>${item[1]}</span>
+                            <i>${item[2]} ج.م</i>
+                        </div>`;
+                } 
+                // 2. تصفية البدائل (نفس المجموعة الدوائية ولكن مادة مختلفة)
+                else if (thClass && currentClass === thClass) {
+                    classCount++;
+                    classContainer.innerHTML += `
+                        <div class="sub-item">
+                            <span>${item[1]} <small style="color:#666">(${item[3] || ''})</small></span>
+                            <i>${item[2]} ج.م</i>
+                        </div>`;
+                }
+            });
+
+            if(exactCount === 0) exactContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مثائل مطابقة مسجلة.</p>';
+            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية مسجلة.</p>';
+
+            document.getElementById('alternativesModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('alternativesModal').style.display = 'none';
         }
 
         async function doSync() {
@@ -183,12 +272,5 @@
             } catch (e) { alert("حدث خطأ في الاتصال!"); btn.innerText = "تحديث البيانات"; }
         }
     </script>
-    if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('جاهز للعمل أوفلاين', reg))
-      .catch(err => console.log('فشل تسجيل الخدمة', err));
-  });
-}
 </body>
 </html>
