@@ -38,11 +38,11 @@
             padding: 20px; border-left: 1px solid #333; overflow-y: auto;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; font-size: 16px; }
+        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 15px; margin-bottom: 10px; font-size: 15px; }
 
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #fff; }
-        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; font-family: 'Cairo'; outline: none; }
+        .filter-group { margin-bottom: 12px; }
+        .filter-group label { display: block; margin-bottom: 4px; font-size: 12px; color: #fff; }
+        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 8px; border-radius: 8px; font-family: 'Cairo'; outline: none; font-size: 13px; }
         .sidebar-input { width: 100%; background: #111; color: #ccc; border: 1px solid #333; padding: 8px; border-radius: 6px; font-family: 'Cairo'; font-size: 11px; direction: ltr; }
 
         /* النتائج */
@@ -51,13 +51,18 @@
         .item-info { flex: 1; }
         .item-info b { display: block; color: #fff; font-size: 15px; margin-bottom: 2px; }
         .item-info span { font-size: 12px; color: #666; display: block; }
-        .item-info .tags { font-size: 11px; color: var(--primary); margin-top: 4px; }
+        .item-info .desc { font-size: 13px; color: var(--primary); font-weight: bold; margin-top: 3px; margin-bottom: 3px; }
+        .item-info .tags { font-size: 11px; color: #888; margin-top: 4px; }
         .item-price { color: var(--primary); font-weight: bold; font-size: 20px; min-width: 70px; text-align: left; }
         .cam-icon { color: var(--primary); font-size: 20px; margin-left: 15px; cursor: pointer; padding: 5px; }
 
-        /* نافذة الماستر */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; padding: 20px; overflow-y: auto; }
-        .modal-content { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; max-width: 600px; margin: 20px auto; }
+        /* النوافذ المنبثقة */
+        .modal, .clinical-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; padding: 20px; overflow-y: auto; }
+        .clinical-modal { background: rgba(0,0,0,0.95); z-index: 3000; }
+        
+        .modal-content { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; max-width: 600px; margin: 20px auto; position: relative; }
+        .clinical-box { background: #0a0a0a; border: 1px solid var(--primary); border-radius: 15px; padding: 20px; max-width: 550px; margin: 40px auto; position: relative; }
+        
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
         .modal-header h2 { color: #fff; font-size: 18px; margin: 0; }
         .close-modal { color: var(--primary); font-size: 24px; cursor: pointer; }
@@ -67,14 +72,10 @@
         .sub-item span { color: #fff; }
         .sub-item i { color: var(--primary); }
 
-        /* روابط المواد الفعالة */
         .ingredient-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
         .ing-btn { background: #1a1a1a; border: 1px solid var(--primary); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'Cairo'; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .ing-btn:hover { background: var(--primary); }
 
-        /* نافذة التحليل الدوائي بالعربي */
-        .clinical-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: none; padding: 20px; overflow-y: auto; }
-        .clinical-box { background: #0a0a0a; border: 1px solid var(--primary); border-radius: 15px; padding: 20px; max-width: 550px; margin: 40px auto; }
         .clinical-title { color: #fff; border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         .clinical-title i { color: var(--primary); }
         
@@ -97,7 +98,7 @@
             <h1>Dr.Mourad Pharmacies</h1>
         </div>
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="بحث بالاسم، الكود، المادة أو الفئة..." oninput="applyFilters()">
+            <input type="text" id="searchInput" class="search-input" placeholder="بحث بالاسم، الكود، التوصيف، المادة..." oninput="applyFilters()">
             <button class="filter-btn" onclick="toggleSidebar()"><i class="fas fa-sliders-h"></i></button>
         </div>
     </header>
@@ -115,14 +116,21 @@
             </select>
         </div>
 
-        <h3>مصدر البيانات والمزامنة</h3>
+        <h3>إعدادات شيت جوجل</h3>
         <div class="filter-group">
-            <label>رابط متصفح شيت جوجل المباشر:</label>
+            <label>رابط الشيت المباشر:</label>
             <input type="text" id="sheetUrlInput" class="sidebar-input" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-            <button onclick="saveSheetUrl()" style="background:#222; border:1px solid #444; color:#fff; width:100%; padding:6px; margin-top:5px; border-radius:5px; font-family:'Cairo'; font-size:12px; cursor:pointer;">حفظ السورس الجديد</button>
         </div>
 
-        <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث البيانات</button>
+        <div class="filter-group">
+            <label>معرف الورقة المطلوبة (GID):</label>
+            <input type="text" id="sheetGidInput" class="sidebar-input" placeholder="0" value="0">
+            <small style="font-size:10px; color:#666; display:block; margin-top:2px;">الورقة الأولى دائماً تكون 0، وباقي الأوراق تجد رقمها في نهاية الرابط بعد gid=</small>
+        </div>
+        
+        <button onclick="saveSheetSettings()" style="background:#222; border:1px solid #444; color:#fff; width:100%; padding:8px; margin-top:5px; border-radius:6px; font-family:'Cairo'; font-size:13px; cursor:pointer; font-weight:bold;">حفظ الإعدادات</button>
+
+        <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث ومزامنة البيانات</button>
         <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></p>
     </div>
 
@@ -134,7 +142,7 @@
             </div>
             <div>
                 <p style="font-size: 13px; margin: 0;">المادة الفعالة: <span id="modalActiveIng" style="color:#fff;"></span></p>
-                <p style="font-size: 13px; margin: 5px 0 0 0;">المجموعة الدوائية: <span id="modalClass" style="color:var(--primary);"></span></p>
+                <p style="font-size: 13px; margin: 5px 0 0 0;">التوصيف الدوائي: <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
             <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي المعرب أوفلاين (Drugs.com)</div>
@@ -144,7 +152,7 @@
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
             <div id="exactMatches"></div>
 
-            <div class="section-title">بدائل من نفس المجموعة الدوائية</div>
+            <div class="section-title">بدائل من نفس التوصيف الدوائي</div>
             <div id="classMatches"></div>
         </div>
     </div>
@@ -162,7 +170,6 @@
     <main id="listBody"></main>
 
     <script>
-        // دالة تنظيف ومسح الكراش القديم تلقائياً لحل مشكلة التعليق فوراً
         try {
             const currentData = localStorage.getItem('pharmacyData');
             if (currentData && (currentData.includes('"undefined"') || currentData.includes('DEFAULT_SHEET_URL'))) {
@@ -182,32 +189,21 @@
         const clinicalDatabase = {
             'paracetamol': {
                 uses: 'مسكن للآلام الخفيفة إلى المتوسطة وخافض للحرارة لتخفيف الحمى.',
-                mechanism: 'مثبط ضعيف لتصنيع البروستاجلاندينات بشكل أساسي في الجهاز العصبي المركزي (COX-3)، مع تأثير طرفي ضعيف جداً مضاد للالتهاب.',
+                mechanism: 'مثبط ضعيف لتصنيع البروستاجلاندينات بشكل أساسي في الجهاز العصبي المركزي (COX-3).',
                 dose: 'البالغون: 500 مجم إلى 1 جم كل 4-6 ساعات عند الحاجة. الحد الأقصى المطلق 4 جم يومياً.',
-                side_effects: 'آمن بشكل عام؛ نادراً ما يحدث رد فعل تحسسي جلدي أو بثور حادة متعممة.',
-                excretion: 'التمثيل الغذائي في الكبد عن طريق الاقتران بالجلوكورونيد والكبريتات؛ وتفرز النواتج في البول.',
-                pregnancy: 'فئة B. يعتبر آمناً بشكل عام؛ استخدم أقل جرعة فعالة ولأقصر فترة ممكنة.',
-                breastfeeding: 'آمن؛ يفرز في لبن الأم بكميات ضئيلة جداً لا تشكل خطورة على الرضيع.',
-                renal: 'معدل تصفية الكرياتينين < 10 مل/دقيقة: يتم زيادة الفاصل الزمني بين الجرعات إلى كل 8 ساعات.',
+                side_effects: 'آمن بشكل عام؛ نادراً ما يحدث رد فعل تحسسي جلدي.',
+                excretion: 'التمثيل الغذائي في الكبد؛ وتفرز النواتج في البول.',
+                pregnancy: 'فئة B. يعتبر آمناً؛ استخدم أقل جرعة فعالة ولأقصر فترة ممكنة.',
+                breastfeeding: 'آمن؛ يفرز في لبن الأم بكميات ضئيلة جداً.',
+                renal: 'معدل تصفية الكرياتينين < 10 مل/دقيقة: يتم زيادة الفاصل الزمني إلى كل 8 ساعات.',
                 hepatic: 'القصور الحاد: موانع استعمال أو تقييد صارم لتجنب تراكم مركب NAPQI السام للكبد.',
-                interactions: 'يزيد من التأثير المضاد للتخثر للوارفارين؛ تزداد احتمالية السميّة الكبدية مع محفزات CYP2E1 مثل الكحول.'
-            },
-            'amoxicillin': {
-                uses: 'علاج العدوى البكتيرية الحساسة بما في ذلك التهابات الأذن والأنف والحنجرة، الجهاز التنفسي، المسالك البولية، والجلد.',
-                mechanism: 'يرتبط ببروتينات ربط البنسلين (PBPs)، مما يثبط عملية الـ Transpeptidation لجدار الخلية البكتيرية ويؤدي إلى تحللها المباشر (قاتل للبكتيريا).',
-                dose: 'البالغون: 250 مجم إلى 500 مجم كل 8 ساعات، أو 500 مجم إلى 875 مجم كل 12 ساعة.',
-                side_effects: 'غثيان، قيء، إسهال، طفح جلدي تحسسي، صدمة حساسية، وإسهال مرتبطة بـ Clostridioides difficile.',
-                excretion: 'التصفية الكلوية؛ يفرز بشكل أساسي دون تغيير في البول عبر الترشيح الكبيبي والإفراز الأنبيبي.',
-                pregnancy: 'فئة B. آمن للاستخدام؛ لا توجد مخاطر موثقة لتشوهات الأجنة.',
-                breastfeeding: 'آمن؛ متوافق مع الرضاعة الطبيعية، ويجب مراقبة الرضيع بحثاً عن إسهال أو فطريات.',
-                renal: 'معدل الفلترة الكلوية 10-30 مل/دقيقة: بحد أقصى 500 مجم كل 12 ساعة. أقل من 10 مل/دقيقة: بحد أقصى 500 مجم كل 24 ساعة.',
-                hepatic: 'لا توجد حاجة لتعديل الجرعة إلا في حالة وجود قصور حاد مسبق في وظائف الكبد.'
+                interactions: 'يزيد من التأثير المضاد للتخثر للوارفارين عند الاستخدام المزمن بجرعات عالية.'
             }
         };
 
         window.onload = () => {
-            const savedUrl = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
-            document.getElementById('sheetUrlInput').value = savedUrl;
+            document.getElementById('sheetUrlInput').value = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
+            document.getElementById('sheetGidInput').value = localStorage.getItem('customSheetGid') || "0";
 
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
@@ -219,11 +215,18 @@
                     localStorage.removeItem('pharmacyData');
                 }
             } else {
-                renderRows(); // لعرض رسالة ترحيبية أو تنبيه في حالة عدم وجود داتا
+                renderRows();
             }
             
-            // إخفاء حتمي وفوري لشاشة الفتح لمنع أي تعليق
             setTimeout(hideSplash, 600);
+
+            // الإغلاق التلقائي عند الضغط خارج النافذة المنبثقة
+            window.onclick = function(event) {
+                const altModal = document.getElementById('alternativesModal');
+                const clinModal = document.getElementById('clinicalModal');
+                if (event.target === altModal) { closeModal(); }
+                if (event.target === clinModal) { closeClinicalModal(); }
+            };
         };
 
         function hideSplash() {
@@ -231,11 +234,14 @@
             if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 300); }
         }
 
-        function saveSheetUrl() {
+        function saveSheetSettings() {
             const rawUrl = document.getElementById('sheetUrlInput').value.trim();
+            const rawGid = document.getElementById('sheetGidInput').value.trim() || "0";
+            
             if(rawUrl.includes("docs.google.com/spreadsheets")) {
                 localStorage.setItem('customSheetUrl', rawUrl);
-                alert("تم حفظ رابط الشيت! تأكد أنه متاح للعامة (Viewer) ثم اضغط تحديث البيانات.");
+                localStorage.setItem('customSheetGid', rawGid);
+                alert("تم حفظ الرابط ومعرف الورقة (GID) بنجاح! اضغط الآن على زر تحديث البيانات لجلبها.");
             } else { alert("من فضلك أدخل رابط شيت جوجل بشكل صحيح."); }
         }
 
@@ -260,6 +266,7 @@
 
             viewData = masterData.filter(row => {
                 if(!row || row.length < 3) return false;
+                // الفلترة تشمل الكود [0] والاسم [1] والمادة [3] والتوصيف [4]
                 const rowStr = `${row[0]} ${row[1]} ${row[3] || ''} ${row[4] || ''}`.toLowerCase();
                 return words.every(word => {
                     const translated = translateWord(word);
@@ -277,7 +284,7 @@
             const container = document.getElementById('listBody');
             container.innerHTML = '';
             if (!viewData || viewData.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#777; font-size:14px;">البرنامج جاهز! افتح القائمة الجانبية ☰، ضع رابط الشيت واضغط "تحديث البيانات".</div>';
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#777; font-size:14px;">البرنامج جاهز! افتح القائمة الجانبية ☰، اضبط إعدادات الشيت والـ Gid ثم اضغط "تحديث".</div>';
                 return;
             }
             const fragment = document.createDocumentFragment();
@@ -288,10 +295,12 @@
                 div.className = 'item';
                 div.onclick = (e) => { if(!e.target.classList.contains('cam-icon')) showAlternatives(item); };
                 
+                // تم تعديل الواجهة هنا لعرض التوصيف الدوائي مباشرة تحت اسم الصنف
                 div.innerHTML = `
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
                         <b>${item[1]}</b>
+                        ${item[4] ? '<div class="desc">' + item[4] + '</div>' : ''}
                         <span>كود: ${item[0]}</span>
                         <div class="tags">${item[3] ? '<i class="fas fa-flask"></i> ' + item[3] : ''}</div>
                     </div>
@@ -352,7 +361,7 @@
             });
 
             if(exactCount === 0) exactContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مثائل مطابقة.</p>';
-            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية.</p>';
+            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية مسجلة من نفس التوصيف.</p>';
 
             document.getElementById('alternativesModal').style.display = 'block';
         }
@@ -377,16 +386,11 @@
             };
 
             const labels = {
-                uses: 'الاستخدامات (Uses)',
-                mechanism: 'ميكانيكية العمل (Mechanism of Action)',
-                dose: 'الجرعة الموصى بها (Recommended Dose)',
-                side_effects: 'الأعراض الجانبية (Side Effects)',
-                excretion: 'الإخراج والتخلص من الدواء (Excretion)',
-                pregnancy: 'الحمل (Pregnancy)',
-                breastfeeding: 'الرضاعة الطبيعية (Breastfeeding)',
-                renal: 'القصور الكلوي (Renal Impairment)',
-                hepatic: 'القصور الكبدي (Hepatic Impairment)',
-                interactions: 'التفاعلات الدوائية (Drug-Drug Interactions)'
+                uses: 'الاستخدامات (Uses)', mechanism: 'ميكانيكية العمل (Mechanism of Action)',
+                dose: 'الجرعة الموصى بها (Recommended Dose)', side_effects: 'الأعراض الجانبية (Side Effects)',
+                excretion: 'الإخراج والتخلص من الدواء (Excretion)', pregnancy: 'الحمل (Pregnancy)',
+                breastfeeding: 'الرضاعة الطبيعية (Breastfeeding)', renal: 'القصور الكلوي (Renal Impairment)',
+                hepatic: 'القصور الكبدي (Hepatic Impairment)', interactions: 'التفاعلات الدوائية (Drug-Drug Interactions)'
             };
 
             for (let key in labels) {
@@ -397,7 +401,6 @@
                     </div>
                 `;
             }
-
             document.getElementById('clinicalModal').style.display = 'block';
         }
 
@@ -409,16 +412,18 @@
             btn.innerText = "جاري التحميل...";
             
             const currentSheetUrl = document.getElementById('sheetUrlInput').value.trim();
-            const matches = currentSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            const currentGid = document.getElementById('sheetGidInput').value.trim() || "0";
             
+            const matches = currentSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
             if (!matches || !matches[1]) {
-                alert("رابط شيت جوجل غير صحيح! انسخ الرابط المباشر من المتصفح بالكامل.");
-                btn.innerText = "تحدث البيانات";
+                alert("رابط شيت جوجل غير صحيح!");
+                btn.innerText = "تحديث البيانات";
                 return;
             }
             
             const sheetId = matches[1];
-            const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+            // قمنا بربط الـ GID هنا في الرابط لجلب ورقة محددة بدقة
+            const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${currentGid}`;
 
             try {
                 const res = await fetch(directCsvUrl);
@@ -441,16 +446,17 @@
                 if(parsedData.length > 0) {
                     localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
                     localStorage.setItem('customSheetUrl', currentSheetUrl);
+                    localStorage.setItem('customSheetGid', currentGid);
                     const now = new Date();
                     const timeStr = now.toLocaleTimeString('ar-EG') + " - " + now.toLocaleDateString('ar-EG');
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة! يرجى فحص الشيت جيداً.");
+                    alert("لم نجد بيانات صالحة في هذه الورقة! تأكد من مطابقة الأعمدة.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
-                alert("فشلت المزامنة! تأكد أن خيار المشاركة في الشيت مضبوط على: (أي شخص لديه الرابط -> مشاهد)."); 
+                alert("فشلت المزامنة! تأكد أن الورقة المطلوبة والـ GID صحيحة، وأن الشيت متاح للعامة (Viewer)."); 
                 btn.innerText = "تحديث البيانات"; 
             }
         }
