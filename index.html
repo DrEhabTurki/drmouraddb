@@ -162,8 +162,8 @@
     <main id="listBody"></main>
 
     <script>
-        // السورس الافتراضي الاحتياطي
-        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_PLACEHOLDER/edit";
+        // رابط تجريبي عام لحين قيامك بوضع رابط الشيت الخاص بك داخل البرنامج
+        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_DEMO/edit";
         let masterData = [];
         let viewData = [];
 
@@ -226,12 +226,14 @@
                 }
             }
             
-            // إخفاء شاشة الفتح سلاسة
-            setTimeout(() => {
-                const sp = document.getElementById('splash');
-                if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
-            }, 1200);
+            // قفل شاشة الفتح بشكل آمن وحتمي لمنع التعليق مطلقاً
+            hideSplash();
         };
+
+        function hideSplash() {
+            const sp = document.getElementById('splash');
+            if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
+        }
 
         function saveSheetUrl() {
             const rawUrl = document.getElementById('sheetUrlInput').value.trim();
@@ -258,6 +260,8 @@
             const sort = document.getElementById('sortOrder').value;
             const words = query.split(" ");
 
+            if (!masterData || masterData.length === 0) return;
+
             viewData = masterData.filter(row => {
                 if(!row || row.length < 3) return false;
                 const rowStr = `${row[0]} ${row[1]} ${row[3] || ''} ${row[4] || ''}`.toLowerCase();
@@ -276,6 +280,10 @@
         function renderRows() {
             const container = document.getElementById('listBody');
             container.innerHTML = '';
+            if (viewData.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">لا توجد بيانات، يرجى ضبط رابط الشيت والضغط على تحديث البيانات.</div>';
+                return;
+            }
             const fragment = document.createDocumentFragment();
             
             viewData.slice(0, 100).forEach(item => {
@@ -403,29 +411,25 @@
             const btn = document.getElementById('syncBtn');
             btn.innerText = "جاري التحميل...";
             
-            const currentSheetUrl = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
+            const currentSheetUrl = document.getElementById('sheetUrlInput').value.trim();
             
-            // استخراج الـ ID الخاص بالشيت بذكاء من الرابط المباشر للمتصفح
             const matches = currentSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
             if (!matches || !matches[1]) {
-                alert("رابط الشيت الحالي غير صحيح أو غير مكتمل!");
+                alert("رابط شيت جوجل غير صحيح! يرجى لصق الرابط كاملاً من المتصفح.");
                 btn.innerText = "تحديث البيانات";
                 return;
             }
             
             const sheetId = matches[1];
-            // استخدام رابط الـ CSV المجاني والمباشر لجوجل بدون سيرفرات وسكريبتات
             const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
             try {
                 const res = await fetch(directCsvUrl);
-                if(!res.ok) throw new Error("Network response error");
+                if(!res.ok) throw new Error("Fetch error");
                 const text = await res.text();
                 
-                // تحويل بيانات الـ CSV المباشرة إلى مصفوفة برمجية سريعة
                 const lines = text.split("\n");
                 const parsedData = lines.map(line => {
-                    // معالجة الفواصل داخل علامات التنصيص
                     let result = [];
                     let current = '';
                     let inQuotes = false;
@@ -437,20 +441,21 @@
                     }
                     result.push(current.trim());
                     return result;
-                });
+                }).filter(row => row.length >= 3 && row[0] !== "");
 
-                if(parsedData.length > 1) {
+                if(parsedData.length > 0) {
                     localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
+                    localStorage.setItem('customSheetUrl', currentSheetUrl);
                     const now = new Date();
                     const timeStr = now.toLocaleTimeString('ar-EG') + " - " + now.toLocaleDateString('ar-EG');
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("الشيت فارغ أو يحتوي على بيانات غير صحيحة!");
+                    alert("لم نجد بيانات صالحة في الشيت! تأكد من وجود أعمدة (الكود، الاسم، السعر).");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
-                alert("فشلت المزامنة! تأكد أن خيار المشاركة في الشيت مضبوط على: (أي شخص لديه الرابط - مشاهد) للوصول أوفلاين."); 
+                alert("فشلت المزامنة! تأكد من أن خيار المشاركة بالشيت مضبوط على: (أي شخص لديه الرابط -> مشاهد/Viewer)."); 
                 btn.innerText = "تحديث البيانات"; 
             }
         }
