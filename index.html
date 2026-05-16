@@ -220,7 +220,6 @@
             
             setTimeout(hideSplash, 600);
 
-            // الإغلاق التلقائي عند الضغط خارج النافذة المنبثقة
             window.onclick = function(event) {
                 const altModal = document.getElementById('alternativesModal');
                 const clinModal = document.getElementById('clinicalModal');
@@ -266,7 +265,6 @@
 
             viewData = masterData.filter(row => {
                 if(!row || row.length < 3) return false;
-                // الفلترة تشمل الكود [0] والاسم [1] والمادة [3] والتوصيف [4]
                 const rowStr = `${row[0]} ${row[1]} ${row[3] || ''} ${row[4] || ''}`.toLowerCase();
                 return words.every(word => {
                     const translated = translateWord(word);
@@ -295,7 +293,6 @@
                 div.className = 'item';
                 div.onclick = (e) => { if(!e.target.classList.contains('cam-icon')) showAlternatives(item); };
                 
-                // تم تعديل الواجهة هنا لعرض التوصيف الدوائي مباشرة تحت اسم الصنف
                 div.innerHTML = `
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
@@ -422,7 +419,6 @@
             }
             
             const sheetId = matches[1];
-            // قمنا بربط الـ GID هنا في الرابط لجلب ورقة محددة بدقة
             const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${currentGid}`;
 
             try {
@@ -431,6 +427,8 @@
                 const text = await res.text();
                 
                 const lines = text.split("\n");
+                let isFirstLine = true; // مؤشر لتحديد السطر الأول
+
                 const parsedData = lines.map(line => {
                     let result = []; let current = ''; let inQuotes = false;
                     for (let i = 0; i < line.length; i++) {
@@ -441,7 +439,16 @@
                     }
                     result.push(current.trim());
                     return result;
-                }).filter(row => row.length >= 3 && row[0] !== "" && row[0] !== undefined);
+                }).filter((row, index) => {
+                    // شرط الفلترة: تخطي السطر الأول (index === 0) إذا كان يحتوي على كلمات استدلالية لرأس الجدول
+                    if (index === 0) {
+                        const firstCell = row[0] ? row[0].toLowerCase() : '';
+                        if (firstCell.includes('كود') || firstCell.includes('code') || firstCell.includes('الرقم')) {
+                            return false; // تخطي ولا تضفه في الداتا
+                        }
+                    }
+                    return row.length >= 3 && row[0] !== "" && row[0] !== undefined;
+                });
 
                 if(parsedData.length > 0) {
                     localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
