@@ -12,7 +12,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--silver); font-family: 'Cairo', sans-serif; margin: 0; padding: 0; overflow: hidden; }
 
-        /* شاشة الفتح */
+        /* شاشة الفتش */
         #splash { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; pointer-events: none; }
         #splash img { width: 220px; object-fit: contain; }
 
@@ -121,8 +121,14 @@
             <label>رابط الشيت المباشر:</label>
             <input type="text" id="sheetUrlInput" class="sidebar-input" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
         </div>
+
+        <h3>تحسين المعلومات (AI Engine)</h3>
+        <div class="filter-group">
+            <label>Gemini API Key (اختياري لجلب معلومات احترافية محدثة):</label>
+            <input type="password" id="apiKeyInput" class="sidebar-input" placeholder="AIzaSy..." style="direction: ltr;">
+        </div>
         
-        <button onclick="saveSheetSettings()" style="background:#222; border:1px solid #444; color:#fff; width:100%; padding:8px; margin-top:5px; border-radius:6px; font-family:'Cairo'; font-size:13px; cursor:pointer; font-weight:bold;">حفظ الرابط</button>
+        <button onclick="saveAllSettings()" style="background:#222; border:1px solid #444; color:#fff; width:100%; padding:8px; margin-top:5px; border-radius:6px; font-family:'Cairo'; font-size:13px; cursor:pointer; font-weight:bold;">حفظ الإعدادات</button>
 
         <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث ومزامنة البيانات</button>
         <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></p>
@@ -139,8 +145,8 @@
                 <p style="font-size: 13px; margin: 5px 0 0 0;">التوصيف الدوائي: <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
-            <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي المعرب أوفلاين (Drugs.com)</div>
-            <p style="font-size:11px; color:#777; margin:0;">اضغط على المادة الفعالة لفتح المونوغراف الطبي الشامل والعشري لها:</p>
+            <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي المتقدم المعرّب</div>
+            <p style="font-size:11px; color:#777; margin:0;">اضغط على المادة الفعالة لتوليد التقرير السريري الشامل (Advanced Pharmacotherapy):</p>
             <div id="ingredientButtons" class="ingredient-links"></div>
 
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
@@ -164,13 +170,6 @@
     <main id="listBody"></main>
 
     <script>
-        try {
-            const currentData = localStorage.getItem('pharmacyData');
-            if (currentData && (currentData.includes('"undefined"') || currentData.includes('DEFAULT_SHEET_URL'))) {
-                localStorage.removeItem('pharmacyData');
-            }
-        } catch(e) { console.log(e); }
-
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_DEMO/edit";
         let masterData = [];
         let viewData = [];
@@ -180,23 +179,9 @@
             'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
         };
 
-        const clinicalDatabase = {
-            'paracetamol': {
-                uses: 'مسكن للآلام الخفيفة إلى المتوسطة وخافض للحرارة لتخفيف الحمى.',
-                mechanism: 'مثبط ضعيف لتصنيع البروستاجلاندينات بشكل أساسي في الجهاز العصبي المركزي (COX-3).',
-                dose: 'البالغون: 500 مجم إلى 1 جم كل 4-6 ساعات عند الحاجة. الحد الأقصى المطلق 4 جم يومياً.',
-                side_effects: 'آمن بشكل عام؛ نادراً ما يحدث رد فعل تحسسي جلدي.',
-                excretion: 'التمثيل الغذائي في الكبد؛ وتفرز النواتج في البول.',
-                pregnancy: 'فئة B. يعتبر آمناً؛ استخدم أقل جرعة فعالة ولأقصر فترة ممكنة.',
-                breastfeeding: 'آمن؛ يفرز في لبن الأم بكميات ضئيلة جداً.',
-                renal: 'معدل تصفية الكرياتينين < 10 مل/دقيقة: يتم زيادة الفاصل الزمني إلى كل 8 ساعات.',
-                hepatic: 'القصور الحاد: موانع استعمال أو تقييد صارم لتجنب تراكم مركب NAPQI السام للكبد.',
-                interactions: 'يزيد من التأثير المضاد للتخثر للوارفارين عند الاستخدام المزمن بجرعات عالية.'
-            }
-        };
-
         window.onload = () => {
             document.getElementById('sheetUrlInput').value = localStorage.getItem('customSheetUrl') || DEFAULT_SHEET_URL;
+            document.getElementById('apiKeyInput').value = localStorage.getItem('geminiApiKey') || '';
 
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
@@ -226,11 +211,14 @@
             if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 300); }
         }
 
-        function saveSheetSettings() {
+        function saveAllSettings() {
             const rawUrl = document.getElementById('sheetUrlInput').value.trim();
-            if(rawUrl.includes("docs.google.com/spreadsheets")) {
-                localStorage.setItem('customSheetUrl', rawUrl);
-                alert("تم حفظ الرابط بنجاح! اضغط الآن على زر تحديث البيانات لجلبها.");
+            const rawKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if(rawUrl.includes("docs.google.com/spreadsheets") || rawUrl === "") {
+                if(rawUrl) localStorage.setItem('customSheetUrl', rawUrl);
+                localStorage.setItem('geminiApiKey', rawKey);
+                alert("تم حفظ الإعدادات ومفتاح الـ API بنجاح!");
             } else { alert("من فضلك أدخل رابط شيت جوجل بشكل صحيح."); }
         }
 
@@ -353,42 +341,86 @@
             document.getElementById('alternativesModal').style.display = 'block';
         }
 
-        function openClinicalInfo(ingName) {
-            const cleanKey = ingName.toLowerCase().trim();
+        async function openClinicalInfo(ingName) {
             document.getElementById('clinicalIngName').innerText = ingName;
             const grid = document.getElementById('clinicalDataGrid');
-            grid.innerHTML = '';
-
-            const data = clinicalDatabase[cleanKey] || {
-                uses: `مؤشر للاستخدام العلاجي النوعي وفقاً لدليل مونوغراف المادة الفعالة ${ingName}.`,
-                mechanism: `تعمل من خلال مسارات جزيئية مستهدفة ومحددة تحت الفئة الفسيولوجية والدوائية للمادة.`,
-                dose: 'يرجى مراجعة معايير المونوغراف الطبي الخاص بحالة المريض السريرية والبروتوكول المعتمد.',
-                side_effects: 'تفاعلات فرط الحساسية، اضطرابات في الجهاز الهضمي، أو آثار جانبية مرتبطة بالفئة الدوائية.',
-                excretion: 'تخضع للتصفية والتمثيل الجسدي القياسي مع تتبع مسار الإخراج الكلوي أو الصفراوي.',
-                pregnancy: 'مراجعة معايير المخاطر والفوائد السريرية الخاصة بكل مرحلة حمل بشكل دقيق.',
-                breastfeeding: 'إفراز المادة في لبن الأم غير محدد بدقة؛ يجب توخي الحذر الإكلينيكي والاستشارة.',
-                renal: 'يتم التعديل بناءً على معدل الفلترة الكبيبية (GFR) إذا استدعت الحالة وجود قصور كلوي.',
-                hepatic: 'مراقبة إنزيمات الكبد بانتظام في حالات القصور الكبدي مسبق الفشل تفادياً للتراكم السمّي.',
-                interactions: 'تقييم شامل للمريض في حالة الاستخدام المتزامن مع أدوية تعدل إنزيمات الكبد أو عالية الارتباط بالبروتينات.'
-            };
+            grid.innerHTML = '<div style="text-align:center; padding:30px; color:var(--primary); font-size:14px;"><i class="fas fa-spinner fa-spin"></i> جاري توليد تحليل إكلينيكي متقدم وموثق (Advanced Pharmacotherapy)...</div>';
+            document.getElementById('clinicalModal').style.display = 'block';
 
             const labels = {
-                uses: 'الاستخدامات (Uses)', mechanism: 'ميكانيكية العمل (Mechanism of Action)',
-                dose: 'الجرعة الموصى بها (Recommended Dose)', side_effects: 'الأعراض الجانبية (Side Effects)',
-                excretion: 'الإخراج والتخلص من الدواء (Excretion)', pregnancy: 'الحمل (Pregnancy)',
-                breastfeeding: 'الرضاعة الطبيعية (Breastfeeding)', renal: 'القصور الكلوي (Renal Impairment)',
-                hepatic: 'القصور الكبدي (Hepatic Impairment)', interactions: 'التفاعلات الدوائية (Drug-Drug Interactions)'
+                uses: 'الاستخدامات المتقدمة (Uses)', mechanism: 'ميكانيكية العمل الجزيئية (Mechanism of Action)',
+                dose: 'الجرعات السريرية والقصوى (Recommended Dose)', side_effects: 'الأعراض الجانبية والتحذيرات (Side Effects)',
+                excretion: 'الحركية الدوائية والإخراج (Excretion & PK)', pregnancy: 'الحمل وفئة الأمان (Pregnancy Category)',
+                breastfeeding: 'الرضاعة الطبيعية (Breastfeeding)', renal: 'تعديل جرعات القصور الكلوي (Renal Impairment)',
+                hepatic: 'تعديل جرعات القصور الكبدي (Hepatic Impairment)', interactions: 'التفاعلات الدوائية الخطيرة (Drug-Drug Interactions)'
             };
 
+            const apiKey = localStorage.getItem('geminiApiKey');
+
+            // إذا لم يتم توفير مفتاح الـ API، يتم استخدام النص التلقائي القياسي
+            if (!apiKey) {
+                renderStaticData(ingName, labels);
+                return;
+            }
+
+            // صياغة البرومبت بدقة صيدلانية احترافية وبصيغة جيسون محددة لعدم حدوث أي خطأ في العرض
+            const prompt = `أنت صيدلاني إكلينيكي خبير ومحترف. قم بإنتاج تقرير مفصل بمستوى "Advanced Pharmacotherapy" وبصيغة لغوية طبية متقنة وموثقة عن المادة الفعالة: "${ingName}".
+            يجب أن تكون الإجابة بصيغة JSON حصرية، بنفس المفاتيح التالية تماماً وباللغة العربية الفصحى الطبية دون أي نصوص إضافية خارج الجيسون:
+            {
+                "uses": "توضيح دقيق للاستخدامات المعتمدة و off-label الموثقة",
+                "mechanism": "شرح جزيئي عميق للمستقبلات والمسارات الحيوية",
+                "dose": "البروتوكولات القياسية والحد الأقصى للبالغين والأطفال",
+                "side_effects": "الآثار الجانبية الشائعة والخطيرة ونسب حدوثها إن وجدت",
+                "excretion": "معالم الـ PK مثل Half-life ونسب الإخراج الكلوي والصفراوي",
+                "pregnancy": "الفئة المعتمدة بالتفصيل وتوجيهات الأمان الإكلينيكي",
+                "breastfeeding": "معاملات النفاذية للبن الأم ومدى خطورتها",
+                "renal": "طريقة تعديل الجرعات الدقيقة بناءً على CrCl أو GFR",
+                "hepatic": "احتياطات القصور الكبدي ومراقبة الإنزيمات بدقة",
+                "interactions": "أبرز التداخلات الدوائية مع آلية حدوثها"
+            }`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) throw new Error("API Error");
+                const resData = await response.json();
+                let rawText = resData.candidates[0].content.parts[0].text;
+                
+                // تنظيف النص من علامات الكود إن وجدت لضمان عمل البارسير بنجاح
+                rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+                const aiData = JSON.parse(rawText);
+
+                grid.innerHTML = '';
+                for (let key in labels) {
+                    grid.innerHTML += `
+                        <div class="clinical-row">
+                            <strong>${labels[key]}</strong>
+                            <p>${aiData[key] || 'لا توجد بيانات متوفرة.'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("AI Generation failed:", error);
+                renderStaticData(ingName, labels, "فشل جلب البيانات الذكية الحية. تم عرض الدليل الافتراضي؛ تأكد من صلاحية الـ API Key الخاص بك.");
+            }
+        }
+
+        function renderStaticData(ingName, labels, warningMessage = "") {
+            const grid = document.getElementById('clinicalDataGrid');
+            grid.innerHTML = warningMessage ? `<div style="color:#ff3333; font-size:11px; text-align:center; margin-bottom:8px;">${warningMessage}</div>` : '';
+            
             for (let key in labels) {
                 grid.innerHTML += `
                     <div class="clinical-row">
                         <strong>${labels[key]}</strong>
-                        <p>${data[key] || 'لم يتم تحديد بيانات موثقة.'}</p>
+                        <p>مؤشر علاجي نوعي ومعايير سريرية قياسية للفئة الدوائية للمادة [${ingName}]. لتفعيل التحديث الفوري المتقدم والتحليل الجزيئي الشامل عبر الذكاء الاصطناعي، يرجى إضافة الـ Gemini API Key في القائمة الجانبية للتطبيق.</p>
                     </div>
                 `;
             }
-            document.getElementById('clinicalModal').style.display = 'block';
         }
 
         function closeClinicalModal() { document.getElementById('clinicalModal').style.display = 'none'; }
@@ -444,7 +476,7 @@
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة في الشيت.");
+                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
