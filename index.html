@@ -135,12 +135,12 @@
                 <span class="close-modal" onclick="closeModal()">&times;</span>
             </div>
             <div>
-                <p style="font-size: 13px; margin: 0;">المادة الفعالة: <span id="modalActiveIng" style="color:#fff;"></span></p>
-                <p style="font-size: 13px; margin: 5px 0 0 0;">التوصيف الدوائي: <span id="modalClass" style="color:var(--primary);"></span></p>
+                <p style="font-size: 13px; margin: 0;">المادة الفعالة (D): <span id="modalActiveIng" style="color:#fff;"></span></p>
+                <p style="font-size: 13px; margin: 5px 0 0 0;">التوصيف الدوائي (E): <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
             <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي والملاحظات</div>
-            <p style="font-size:11px; color:#777; margin:0;">اضغط بالأسفل لعرض الملاحظات الإكلينيكية المتقدمة الخاصة بالصنف:</p>
+            <p style="font-size:11px; color:#777; margin:0;">اضغط بالأسفل لعرض الملاحظات الإكلينيكية المدونة بالعمود F:</p>
             <div id="ingredientButtons" class="ingredient-links"></div>
 
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
@@ -262,6 +262,7 @@
                 div.className = 'item';
                 div.onclick = (e) => { if(!e.target.classList.contains('cam-icon')) showAlternatives(item); };
                 
+                // الاندكس 4 يمثل العمود الخامس E (التوصيف الدوائي)
                 div.innerHTML = `
                     <i class="fas fa-camera cam-icon" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item[1])}&tbm=isch','_blank')"></i>
                     <div class="item-info">
@@ -292,7 +293,7 @@
             
             btnContainer.innerHTML = `
                 <button class="ing-btn" onclick="openClinicalInfo()">
-                    <i class="fas fa-file-medical-alt"></i> استعراض تفاصيل الملاحظة المتقدمة للصنف
+                    <i class="fas fa-file-medical-alt"></i> استعراض تفاصيل الملاحظة المتقدمة للصنف (F)
                 </button>
             `;
 
@@ -330,12 +331,13 @@
             const grid = document.getElementById('clinicalDataGrid');
             grid.innerHTML = '';
 
+            // الاندكس 5 يمثل العمود السادس F
             const customSheetNote = (currentActiveItem.length >= 6 && currentActiveItem[5]) ? currentActiveItem[5].trim() : '';
 
             if (customSheetNote) {
                 grid.innerHTML = `
                     <div class="clinical-row" style="border-right: 4px solid var(--primary); background: #161616;">
-                        <strong style="font-size: 14px; color: var(--primary); margin-bottom: 8px;"><i class="fas fa-notes-medical"></i> الملاحظة المتقدمة المدونة في الشيت:</strong>
+                        <strong style="font-size: 14px; color: var(--primary); margin-bottom: 8px;"><i class="fas fa-notes-medical"></i> الملاحظة المتقدمة المدونة في العمود F:</strong>
                         <p style="color: #fff; font-size: 14px; line-height: 1.7; white-space: pre-line; text-align: justify;">${customSheetNote}</p>
                     </div>
                 `;
@@ -343,7 +345,7 @@
                 grid.innerHTML = `
                     <div class="clinical-row">
                         <strong>لا توجد ملاحظة مسجلة:</strong>
-                        <p style="color:#777;">العمود السادس (العمود F) الخاص بهذا الصنف فارغ حالياً في شيت جوجل، أو لم يتم إتمام المزامنة بنجاح بعد كتابته. يرجى الضغط على زر "تحديث ومزامنة البيانات" في القائمة الجانبية للتأكيد.</p>
+                        <p style="color:#777;">العمود السادس (العمود F) الخاص بهذا الصنف فارغ في الشيت، أو تأكد من عمل مزامنة صحيحة بعد التحديث الأخير للكود.</p>
                     </div>
                 `;
             }
@@ -384,7 +386,6 @@
             }
             
             const sheetId = matches[1];
-            // إضافة مَعلَمَة النطاق إجبارياً &range=A:F لضمان جلب العمود السادس كاملاً
             const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&range=A:F`;
 
             try {
@@ -394,15 +395,24 @@
                 
                 const parsedLines = parseCSV(text);
 
-                const parsedData = parsedLines.filter((row, index) => {
+                const parsedData = parsedLines.map((row, index) => {
+                    // تخطي سطر العناوين الرئيسي
                     if (index === 0) {
                         const firstCell = row[0] ? row[0].toLowerCase() : '';
                         if (firstCell.includes('كود') || firstCell.includes('code') || firstCell.includes('الرقم')) {
-                            return false; 
+                            return null; 
                         }
                     }
-                    return row.length >= 3 && row[0] !== "" && row[0] !== undefined;
-                });
+                    
+                    // إصلاح الاختصار التلقائي من جوجل شيت: لو عدد الأعمدة المرجعة أقل من 6، نقوم بتعبئتها إجبارياً بخلايا فارغة
+                    if (row.length > 0 && row[0] !== "" && row[0] !== undefined) {
+                        while (row.length < 6) {
+                            row.push("");
+                        }
+                        return row;
+                    }
+                    return null;
+                }).filter(row => row !== null);
 
                 if(parsedData.length > 0) {
                     localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
@@ -412,7 +422,7 @@
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة في الشيت.");
+                    alert("لم نجد بيانات صالحة! تأكد من وجود داتا حقيقية تحت العناوين.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
