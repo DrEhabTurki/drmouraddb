@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dr.Mourad Pharmacies</title>
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #ff6624; --silver: #d1d1d1; --bg: #000; --card: #121212; --header-h: 150px; }
@@ -162,7 +162,14 @@
     <main id="listBody"></main>
 
     <script>
-        // رابط تجريبي عام لحين قيامك بوضع رابط الشيت الخاص بك داخل البرنامج
+        // دالة تنظيف ومسح الكراش القديم تلقائياً لحل مشكلة التعليق فوراً
+        try {
+            const currentData = localStorage.getItem('pharmacyData');
+            if (currentData && (currentData.includes('"undefined"') || currentData.includes('DEFAULT_SHEET_URL'))) {
+                localStorage.removeItem('pharmacyData');
+            }
+        } catch(e) { console.log(e); }
+
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_DEMO/edit";
         let masterData = [];
         let viewData = [];
@@ -172,7 +179,6 @@
             'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
         };
 
-        // الفهرس الإكلينيكي العشري المتقدم والمعرب (Drugs.com Offline Criteria)
         const clinicalDatabase = {
             'paracetamol': {
                 uses: 'مسكن للآلام الخفيفة إلى المتوسطة وخافض للحرارة لتخفيف الحمى.',
@@ -196,18 +202,6 @@
                 breastfeeding: 'آمن؛ متوافق مع الرضاعة الطبيعية، ويجب مراقبة الرضيع بحثاً عن إسهال أو فطريات.',
                 renal: 'معدل الفلترة الكلوية 10-30 مل/دقيقة: بحد أقصى 500 مجم كل 12 ساعة. أقل من 10 مل/دقيقة: بحد أقصى 500 مجم كل 24 ساعة.',
                 hepatic: 'لا توجد حاجة لتعديل الجرعة إلا في حالة وجود قصور حاد مسبق في وظائف الكبد.'
-            },
-            'ibuprofen': {
-                uses: 'تخفيف أعراض الاضطرابات الالتهابية، التهاب المفاصل الروماتويدي، الفصال العظمي، الآلام الخفيفة، وعسر الطمث.',
-                mechanism: 'تثبيط عكسي غير انتقائي لإنزيمات الأكسدة الحلقية (COX-1 و COX-2)، مما يوقف إنتاج البروستاجلاندينات المسؤول عن الألم والالتهاب.',
-                dose: 'البالغون: 200 مجم إلى 400 مجم كل 4-6 ساعات. الجرعة القصوى كمضاد للالتهاب هي 3200 مجم يومياً.',
-                side_effects: 'عسر هضم، قرحة معدية، نزيف في الجهاز الهضمي، إصابة كلوية حادة، احتباس السوائل، وارتفاع ضغط الدم.',
-                excretion: 'التمثيل الغذائي في الكبد عبر إنزيم CYP2C9؛ ويتم التخلص من النواتج عن طريق الكلى.',
-                pregnancy: 'يمنع تماماً في الثلث الثالث من الحمل (خطر الإغلاق المبكر للقناة الشريانية للجنين). فئة B في الثلث الأول والثاني.',
-                breastfeeding: 'متوافق؛ يمر إلى لبن الأم بكميات ضئيلة جداً لا تذكر.',
-                renal: 'تجنب استخدامه في أمراض الكلى المتقدمة؛ حيث يسبب انقباض الشريان الوارد مما يقلل معدل الفلترة الكلوية.',
-                hepatic: 'يجب مراقبته بصرامة في حالات تليف الكبد؛ قد يلزم تقليل الجرعة نظراً لارتفاع نسبة ارتباطه ببروتينات البلازما.',
-                interactions: 'يقلل من تأثير خافضات الضغط (مثل مثبطات ACE ومغلقات بيتا)، ويزيد من مخاطر النزيف مع مضادات التخثر.'
             }
         };
 
@@ -218,28 +212,30 @@
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
                 try {
-                    masterData = JSON.parse(saved).slice(1);
+                    masterData = JSON.parse(saved);
                     applyFilters();
                     document.getElementById('syncTime').innerText = "آخر مزامنة: " + (localStorage.getItem('lastSyncTime') || '--');
                 } catch(e) {
                     localStorage.removeItem('pharmacyData');
                 }
+            } else {
+                renderRows(); // لعرض رسالة ترحيبية أو تنبيه في حالة عدم وجود داتا
             }
             
-            // قفل شاشة الفتح بشكل آمن وحتمي لمنع التعليق مطلقاً
-            hideSplash();
+            // إخفاء حتمي وفوري لشاشة الفتح لمنع أي تعليق
+            setTimeout(hideSplash, 600);
         };
 
         function hideSplash() {
             const sp = document.getElementById('splash');
-            if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
+            if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 300); }
         }
 
         function saveSheetUrl() {
             const rawUrl = document.getElementById('sheetUrlInput').value.trim();
             if(rawUrl.includes("docs.google.com/spreadsheets")) {
                 localStorage.setItem('customSheetUrl', rawUrl);
-                alert("تم حفظ رابط الشيت بنجاح! يرجى التأكد أنه (Anyone with the link / Viewer) ثم اضغط تحديث البيانات.");
+                alert("تم حفظ رابط الشيت! تأكد أنه متاح للعامة (Viewer) ثم اضغط تحديث البيانات.");
             } else { alert("من فضلك أدخل رابط شيت جوجل بشكل صحيح."); }
         }
 
@@ -280,13 +276,14 @@
         function renderRows() {
             const container = document.getElementById('listBody');
             container.innerHTML = '';
-            if (viewData.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">لا توجد بيانات، يرجى ضبط رابط الشيت والضغط على تحديث البيانات.</div>';
+            if (!viewData || viewData.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#777; font-size:14px;">البرنامج جاهز! افتح القائمة الجانبية ☰، ضع رابط الشيت واضغط "تحديث البيانات".</div>';
                 return;
             }
             const fragment = document.createDocumentFragment();
             
             viewData.slice(0, 100).forEach(item => {
+                if (!item[1]) return;
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.onclick = (e) => { if(!e.target.classList.contains('cam-icon')) showAlternatives(item); };
@@ -330,7 +327,7 @@
                     }
                 });
             } else {
-                btnContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مادة فعالة مسجلة لعرض الفهرس.</p>';
+                btnContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مادة فعالة لعرض الفهرس.</p>';
             }
 
             const exactContainer = document.getElementById('exactMatches');
@@ -354,8 +351,8 @@
                 }
             });
 
-            if(exactCount === 0) exactContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مثائل مطابقة مسجلة.</p>';
-            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية مسجلة.</p>';
+            if(exactCount === 0) exactContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مثائل مطابقة.</p>';
+            if(classCount === 0) classContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد بدائل علاجية.</p>';
 
             document.getElementById('alternativesModal').style.display = 'block';
         }
@@ -375,7 +372,7 @@
                 pregnancy: 'مراجعة معايير المخاطر والفوائد السريرية الخاصة بكل مرحلة حمل بشكل دقيق.',
                 breastfeeding: 'إفراز المادة في لبن الأم غير محدد بدقة؛ يجب توخي الحذر الإكلينيكي والاستشارة.',
                 renal: 'يتم التعديل بناءً على معدل الفلترة الكبيبية (GFR) إذا استدعت الحالة وجود قصور كلوي.',
-                hepatic: 'مراقبة إنزيمات الكبد بانتظام في حالات القصور الكبدي المسبق تفادياً للتراكم السمّي.',
+                hepatic: 'مراقبة إنزيمات الكبد بانتظام في حالات القصور الكبدي مسبق الفشل تفادياً للتراكم السمّي.',
                 interactions: 'تقييم شامل للمريض في حالة الاستخدام المتزامن مع أدوية تعدل إنزيمات الكبد أو عالية الارتباط بالبروتينات.'
             };
 
@@ -412,11 +409,11 @@
             btn.innerText = "جاري التحميل...";
             
             const currentSheetUrl = document.getElementById('sheetUrlInput').value.trim();
-            
             const matches = currentSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            
             if (!matches || !matches[1]) {
-                alert("رابط شيت جوجل غير صحيح! يرجى لصق الرابط كاملاً من المتصفح.");
-                btn.innerText = "تحديث البيانات";
+                alert("رابط شيت جوجل غير صحيح! انسخ الرابط المباشر من المتصفح بالكامل.");
+                btn.innerText = "تحدث البيانات";
                 return;
             }
             
@@ -430,9 +427,7 @@
                 
                 const lines = text.split("\n");
                 const parsedData = lines.map(line => {
-                    let result = [];
-                    let current = '';
-                    let inQuotes = false;
+                    let result = []; let current = ''; let inQuotes = false;
                     for (let i = 0; i < line.length; i++) {
                         let char = line[i];
                         if (char === '"') { inQuotes = !inQuotes; }
@@ -441,7 +436,7 @@
                     }
                     result.push(current.trim());
                     return result;
-                }).filter(row => row.length >= 3 && row[0] !== "");
+                }).filter(row => row.length >= 3 && row[0] !== "" && row[0] !== undefined);
 
                 if(parsedData.length > 0) {
                     localStorage.setItem('pharmacyData', JSON.stringify(parsedData));
@@ -451,11 +446,11 @@
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة في الشيت! تأكد من وجود أعمدة (الكود، الاسم، السعر).");
+                    alert("لم نجد بيانات صالحة! يرجى فحص الشيت جيداً.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
-                alert("فشلت المزامنة! تأكد من أن خيار المشاركة بالشيت مضبوط على: (أي شخص لديه الرابط -> مشاهد/Viewer)."); 
+                alert("فشلت المزامنة! تأكد أن خيار المشاركة في الشيت مضبوط على: (أي شخص لديه الرابط -> مشاهد)."); 
                 btn.innerText = "تحديث البيانات"; 
             }
         }
