@@ -33,16 +33,17 @@
         /* الغطاء والقائمة الجانبية */
         #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 998; display: none; backdrop-filter: blur(4px); }
         .sidebar { 
-            width: 280px; background: var(--card); height: 100vh; position: fixed; 
+            width: 290px; background: var(--card); height: 100vh; position: fixed; 
             right: 0; top: 0; z-index: 999; transform: translateX(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 25px 20px; border-left: 1px solid #333;
+            padding: 20px; border-left: 1px solid #333; overflow-y: auto;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
+        .sidebar h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; font-size: 16px; }
 
-        .filter-group { margin-bottom: 20px; }
-        .filter-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #fff; }
-        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 12px; border-radius: 8px; font-family: 'Cairo'; outline: none; }
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #fff; }
+        .filter-select { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; font-family: 'Cairo'; outline: none; }
+        .sidebar-input { width: 100%; background: #111; color: #ccc; border: 1px solid #333; padding: 8px; border-radius: 6px; font-family: 'Cairo'; font-size: 12px; direction: ltr; }
 
         /* النتائج */
         main { margin-top: var(--header-h); height: calc(100vh - var(--header-h)); overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
@@ -54,7 +55,7 @@
         .item-price { color: var(--primary); font-weight: bold; font-size: 20px; min-width: 70px; text-align: left; }
         .cam-icon { color: var(--primary); font-size: 20px; margin-left: 15px; cursor: pointer; padding: 5px; }
 
-        /* نافذة البدائل والمثائل والـ AI المحسنة */
+        /* النافذة المنبثقة المحسنة */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; padding: 20px; overflow-y: auto; }
         .modal-content { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; max-width: 600px; margin: 20px auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
@@ -66,16 +67,12 @@
         .sub-item span { color: #fff; }
         .sub-item i { color: var(--primary); }
 
-        /* صندوق الذكاء الاصطناعي الإكلينيكي */
-        .ai-card { background: #0c0c0c; border: 1px dashed var(--primary); border-radius: 10px; padding: 15px; margin-top: 15px; }
-        .ai-card h4 { color: #fff; margin: 0 0 10px 0; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-        .ai-card h4 i { color: var(--primary); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        .ai-text { font-size: 12.5px; line-height: 1.7; color: #b3b3b3; text-align: justify; }
-        .ai-fact { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #1a1a1a; }
-        .ai-fact strong { color: var(--primary); }
+        /* زر Drugs.com المطور */
+        .drugs-card { background: #0c0c0c; border: 1px dashed #333; border-radius: 10px; padding: 15px; margin-top: 15px; text-align: center; }
+        .drugs-btn { display: inline-flex; align-items: center; gap: 8px; background: #0054a6; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; transition: 0.2s; }
+        .drugs-btn:hover { background: #004080; }
 
-        #syncBtn { background: #222; color: #fff; border: 1px solid #444; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; font-family: 'Cairo'; }
+        #syncBtn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-family: 'Cairo'; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -95,7 +92,8 @@
     </header>
 
     <div class="sidebar" id="sidebar">
-        <div style="text-align:center; margin-bottom:20px;"><img src="logo.png" style="width:100px; object-fit:contain;"></div>
+        <div style="text-align:center; margin-bottom:15px;"><img src="logo.png" style="width:80px; object-fit:contain;"></div>
+        
         <h3>خيارات الترتيب</h3>
         <div class="filter-group">
             <label>ترتيب حسب السعر:</label>
@@ -105,8 +103,16 @@
                 <option value="priceHigh">من الأعلى للأقل</option>
             </select>
         </div>
+
+        <h3>مصدر البيانات والمزامنة</h3>
+        <div class="filter-group">
+            <label>رابط API شيت جوجل (تغيير السورس):</label>
+            <input type="text" id="sheetApiInput" class="sidebar-input" placeholder="https://script.google.com/macros/s/.../exec">
+            <button onclick="saveApiUrl()" style="background:#222; border:1px solid #444; color:#fff; width:100%; padding:6px; margin-top:5px; border-radius:5px; font-family:'Cairo'; font-size:12px; cursor:pointer;">حفظ السورس الجديد</button>
+        </div>
+
         <button id="syncBtn" onclick="doSync()"><i class="fas fa-sync"></i> تحديث البيانات</button>
-        <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:15px;"></p>
+        <p id="syncTime" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></p>
     </div>
 
     <div id="alternativesModal" class="modal">
@@ -120,9 +126,11 @@
                 <p style="font-size: 13px; margin: 5px 0 0 0;">المجموعة الدوائية: <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
-            <div class="ai-card">
-                <h4><i class="fas fa-brain"></i> التحليل الإكلينيكي الفوري وعلم الأدوية المتقدم (AI)</h4>
-                <div id="aiAnalysisText" class="ai-text">جاري تحليل المادة الفعالة...</div>
+            <div class="drugs-card">
+                <p style="font-size:12px; color:#aaa; margin:0 0 10px 0;"><i class="fas fa-info-circle"></i> للتحقق من الميكانيكية والجرعات والتداخلات الطبية الموثقة:</p>
+                <a id="drugsComLink" href="#" target="_blank" class="drugs-btn">
+                    <i class="fas fa-external-link-alt"></i> تصفح المادة على Drugs.com
+                </a>
             </div>
 
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
@@ -136,7 +144,8 @@
     <main id="listBody"></main>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec";
+        // الرابط الافتراضي الأساسي في حال عدم وجود رابط مخصص في الذاكرة
+        const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec";
         let masterData = [];
         let viewData = [];
 
@@ -146,6 +155,10 @@
         };
 
         window.onload = () => {
+            // تحميل الرابط المحفوظ أو استخدام الافتراضي
+            const savedApi = localStorage.getItem('customApiUrl') || DEFAULT_API_URL;
+            document.getElementById('sheetApiInput').value = savedApi;
+
             const saved = localStorage.getItem('pharmacyData');
             if (saved) {
                 masterData = JSON.parse(saved).slice(1);
@@ -158,6 +171,16 @@
                 if(sp){ sp.style.opacity='0'; setTimeout(()=>sp.remove(), 400); }
             }, 1200);
         };
+
+        function saveApiUrl() {
+            const newUrl = document.getElementById('sheetApiInput').value.trim();
+            if(newUrl.startsWith("https://script.google.com/")) {
+                localStorage.setItem('customApiUrl', newUrl);
+                alert("تم حفظ سورس الشيت الجديد بنجاح! اضغط تحديث البيانات للمزامنة.");
+            } else {
+                alert("من فضلك أدخل رابط Web App صحيح الخاص بجوجل سكريبت.");
+            }
+        }
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -215,69 +238,26 @@
             container.scrollTop = 0;
         }
 
-        // محرك الذكاء الاصطناعي الاستنتاجي والموسوعي الإكلينيكي (Advanced Pharmacotherapy Engine)
-        function generateAiPharmacology(chemicalName, className) {
-            const chem = chemicalName ? chemicalName.trim().toLowerCase() : '';
-            const cls = className ? className.trim().toLowerCase() : '';
-            
-            let mechanism = "غير متوفر تفاصيل ميكانيكية دقيقة في الفهرس الحالي، ولكن يعمل عبر استهداف المستقبلات الخلوية المتخصصة لتعديل الاستجابة البيولوجية.";
-            let counseling = "يُنصح بمراجعة الجرعات المقررة بدقة وفحص الوظائف الحيوية للمريض في حالات الاستخدام الطويل.";
-            let interactions = "حذر عام مع مضادات التخثر أو الأدوية ذات الارتباط العالي ببروتينات البلازما.";
-
-            // قاعدة المعرفة الذكية المدمجة للتحليل الفوري المتقدم
-            if (chem.includes('paracetamol') || chem.includes('acetaminophen')) {
-                mechanism = "يعمل كـ Weak COX inhibitor في الجهاز العصبي المركزي (COX-3)، مما يمنع تصنيع الـ Prostaglandins مركزياً، مع تأثير ضعيف جداً على الأنسجة الطرفية، لذا يفتقر للخواص المضادة للالتهاب.";
-                counseling = "الجرعة القصوى المطلقة للبالغين هي 4 جرام يومياً. يجب الحذر الشديد وتعديل الجرعات لمرضى القصور الكبدي (Hepatic impairment) لتجنب تراكم مركب NAPQI السام.";
-                interactions = "يتداخل مع الكحول ومحفزات إنزيمات الكبد (CYP2E1) مما يرفع سميته الكبدية.";
-            } else if (chem.includes('amoxicillin')) {
-                mechanism = "مضاد حيوي من عائلة الـ Beta-lactams. يرتبط بالـ Penicillin-Binding Proteins (PBPs) في جدار الخلية البكتيرية، مما يمنع خطوة الـ Transpeptidation وبالتالي يثبط تصنيع الـ Peptidoglycan ويؤدي لتحلل الخلية عاجلاً (Bactericidal).";
-                counseling = "يجب إرشاد المريض بإكمال الكورس العلاجي كاملاً لمنع حدوث مقاومة بكتيرية (Bacterial Resistance). يمكن تناوله مع أو بدون الطعام.";
-                interactions = "قد يقلل من فعالية حبوب منع الحمل الفموية، ويتعارض مع الـ Allopurinol حيث يرفع نسب حدوث الطفح الجلدي.";
-            } else if (chem.includes('ibuprofen')) {
-                mechanism = "مضاد التهاب غير ستيرويدي (NSAID) يعمل كمثبط غير انتقائي لإنزيمات الأكسدة الحلقية (Non-selective COX-1 & COX-2 inhibitor)، مما يمنع تحول حمض الأراشيدونيك إلى البروستاجلاندينات المسؤولة عن الألم والالتهاب.";
-                counseling = "يفضل تناوله بعد الطعام مباشرة لتقليل الأعراض الجانبية على المعدة. يمنع تماماً لمرضى القرحة الهضمية النشطة أو القصور الكلوي المتقدم.";
-                interactions = "يقلل من التأثير الخافض للضغط لمدرات البول ومثبطات ACE، ويرفع خطر النزيف مع الـ Warfarin.";
-            } else if (chem.includes('atorvastatin')) {
-                mechanism = "مثبط تنافسي انتقائي لإنزيم HMG-CoA Reductase، وهو الإنزيم المحدد لمعدل سرعة تصنيع الكوليسترول في الكبد، مما يؤدي لزيادة مستقبلات LDL على أسطح الخلايا الكبدية وزيادة تصفية الكوليسترول السيء من الدم.";
-                counseling = "يجب مراقبة إنزيمات الكبد (LFTs) ومستوى الـ Creatine Kinase (CK) في حال شكوى المريض من آلام عضلية غير مبررة (Myopathy).";
-                interactions = "يتأثر بمثبطات CYP3A4 القوية مثل الـ Erythromycin مما يرفع تركيزه بالدم ومخاطر الـ Rhabdomyolysis.";
-            } else if (chem.includes('metformin')) {
-                mechanism = "ينتمي لعائلة الـ Biguanides. يقلل من إنتاج الجلوكوز في الكبد (Gluconeogenesis)، ويقلل الامتصاص المعوي للجلوكوز، مع تحسين حساسية الأنسجة الطرفية للأنسولين عن طريق تنشيط إنزيم AMPK.";
-                counseling = "يجب تناوله مع الوجبات لتقليل الاضطرابات الهضمية. يتطلب فحص وظائف الكلى (eGFR) بانتظام، ويجب إيقافه مؤقتاً قبل الأشعة بالصبغة لتفادي الـ Lactic Acidosis.";
-                interactions = "يتداخل مع المواد المشعة المعززة باليود والمدرات.";
-            } else {
-                // محرك توليد ذكي بناءً على الفئة الدوائية (Therapeutic Class Generator) إذا لم تكن المادة مسجلة بعينها
-                if (cls.includes('antibiotic') || cls.includes('مضاد حيوي')) {
-                    mechanism = "مضاد ميكروبي يستهدف خلايا البكتيريا إما عبر تدمير الجدار الخلوي أو تثبيط تصنيع البروتينات الحيوية (Ribosomal inhibition) لمنع انقسامها.";
-                    counseling = "الالتزام التام بالمواعيد والجرعات المحددة لضمان تخطي الـ MIC (Minimum Inhibitory Concentration).";
-                } else if (cls.includes('antihypertensive') || cls.includes('ضغط')) {
-                    mechanism = "يعمل على خفض المقاومة الوعائية الطرفية (Peripheral Vascular Resistance) أو تقليل النتاج القلبي عبر غلق القنوات الكلسية أو تثبيط الأنظمة الهرمونية الكلوية.";
-                    counseling = "مراقبة ضغط الدم بانتظام والتحذير من أعراض الـ Orthostatic Hypotension (الدوخة عند الوقوف المفاجئ).";
-                } else if (cls.includes('analgesic') || cls.includes('مسكن')) {
-                    mechanism = "يمنع الوسائط الالتهابية أو يغلق الإشارات العصبية الناقلة للألم طرفياً أو مركزياً.";
-                    counseling = "تجنب الاستخدام المفرط لتفادي التأثير السلبي على المخاطية المعدية أو الفلترة الكلوية.";
-                }
-            }
-
-            // صياغة المخرجات الطبية المركبة برؤية Advanced Pharmacotherapy
-            return `
-                <div class="ai-fact"><strong>ميكانيكية العمل (MoA):</strong> ${mechanism}</div>
-                <div class="ai-fact"><strong>الإرشاد الإكلينيكي والجرعات (Counseling):</strong> ${counseling}</div>
-                <div class="ai-fact"><strong>التفاعلات الدوائية الحرجة (Interactions):</strong> ${interactions}</div>
-            `;
-        }
-
         function showAlternatives(selectedItem) {
-            const activeIng = selectedItem[3] ? selectedItem[3].trim().toLowerCase() : '';
+            const activeIng = selectedItem[3] ? selectedItem[3].trim() : '';
             const thClass = selectedItem[4] ? selectedItem[4].trim().toLowerCase() : '';
 
             document.getElementById('modalDrugName').innerText = selectedItem[1];
-            document.getElementById('modalActiveIng').innerText = selectedItem[3] || 'غير مسجلة';
+            document.getElementById('modalActiveIng').innerText = activeIng || 'غير مسجلة';
             document.getElementById('modalClass').innerText = selectedItem[4] || 'غير مسجلة';
 
-            // تشغيل محرك التحليل الذكي المتقدم وعرضه
-            const aiBody = document.getElementById('aiAnalysisText');
-            aiBody.innerHTML = generateAiPharmacology(selectedItem[3], selectedItem[4]);
+            // بناء مسار البحث المباشر على Drugs.com للمادة الفعالة
+            const drugsBtn = document.getElementById('drugsComLink');
+            if(activeIng) {
+                // استبدال المسافات بشرطة لتتوافق مع بنية روابط Drugs.com المعتادة
+                const formattedName = activeIng.toLowerCase().replace(/ /g, "-");
+                drugsBtn.href = `https://www.drugs.com/${encodeURIComponent(formattedName)}.html`;
+                drugsBtn.style.pointerEvents = "auto";
+                drugsBtn.style.opacity = "1";
+            } else {
+                // إذا لم تكن المادة مسجلة، نقوم بتحويله لصفحة البحث العامة في الموقع
+                drugsBtn.href = `https://www.drugs.com/search.php?searchterm=${encodeURIComponent(selectedItem[1])}`;
+            }
 
             const exactContainer = document.getElementById('exactMatches');
             const classContainer = document.getElementById('classMatches');
@@ -285,13 +265,14 @@
             classContainer.innerHTML = '';
 
             let exactCount = 0; let classCount = 0;
+            const activeIngLower = activeIng.toLowerCase();
 
             masterData.forEach(item => {
                 if (item[0] === selectedItem[0]) return;
                 const currentActive = item[3] ? item[3].trim().toLowerCase() : '';
                 const currentClass = item[4] ? item[4].trim().toLowerCase() : '';
 
-                if (activeIng && currentActive === activeIng) {
+                if (activeIngLower && currentActive === activeIngLower) {
                     exactCount++;
                     exactContainer.innerHTML += `<div class="sub-item"><span>${item[1]}</span><i>${item[2]} ج.م</i></div>`;
                 } else if (thClass && currentClass === thClass) {
@@ -311,13 +292,20 @@
         async function doSync() {
             const btn = document.getElementById('syncBtn');
             btn.innerText = "جاري التحميل...";
+            
+            // جلب الرابط الحالي المستخدم (سواء كان الافتراضي أو المعدل بواسطة الدكتور)
+            const currentApiUrl = localStorage.getItem('customApiUrl') || DEFAULT_API_URL;
+
             try {
-                const res = await fetch(API_URL + "?action=getData");
+                const res = await fetch(currentApiUrl + "?action=getData");
                 const json = await res.json();
                 localStorage.setItem('pharmacyData', JSON.stringify(json.data));
                 localStorage.setItem('lastSyncTime', json.lastSync);
                 location.reload();
-            } catch (e) { alert("حدث خطأ في الاتصال!"); btn.innerText = "تحديث البيانات"; }
+            } catch (e) { 
+                alert("حدث خطأ في الاتصال بالسورس الحالي! يرجى التحقق من الرابط أو اتصال الإنترنت."); 
+                btn.innerText = "تحديث البيانات"; 
+            }
         }
     </script>
 </body>
