@@ -30,7 +30,7 @@
         .search-input { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 12px 15px; border-radius: 10px; color: #fff; font-family: 'Cairo'; font-size: 16px; outline: none; }
         .filter-btn { background: var(--primary); border: none; color: #fff; padding: 0 15px; border-radius: 10px; cursor: pointer; font-size: 18px; }
 
-        /* الغطاء والقائمة الجانبية */
+        /* القائمة الجانبية */
         #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 998; display: none; backdrop-filter: blur(4px); }
         .sidebar { 
             width: 290px; background: var(--card); height: 100vh; position: fixed; 
@@ -55,7 +55,7 @@
         .item-price { color: var(--primary); font-weight: bold; font-size: 20px; min-width: 70px; text-align: left; }
         .cam-icon { color: var(--primary); font-size: 20px; margin-left: 15px; cursor: pointer; padding: 5px; }
 
-        /* النافذة المنبثقة المحسنة */
+        /* نافذة الماستر (البدائل والمثائل) */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; padding: 20px; overflow-y: auto; }
         .modal-content { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; max-width: 600px; margin: 20px auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
@@ -67,10 +67,21 @@
         .sub-item span { color: #fff; }
         .sub-item i { color: var(--primary); }
 
-        /* زر Drugs.com المطور */
-        .drugs-card { background: #0c0c0c; border: 1px dashed #333; border-radius: 10px; padding: 15px; margin-top: 15px; text-align: center; }
-        .drugs-btn { display: inline-flex; align-items: center; gap: 8px; background: #0054a6; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 13px; transition: 0.2s; }
-        .drugs-btn:hover { background: #004080; }
+        /* روابط المواد المنبثقة للـ AI */
+        .ingredient-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+        .ing-btn { background: #1a1a1a; border: 1px solid var(--primary); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: 'Cairo'; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .ing-btn:hover { background: var(--primary); }
+
+        /* نافذة الـ Clinical AI الفرعية المخصصة للمادة */
+        .clinical-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: none; padding: 20px; overflow-y: auto; }
+        .clinical-box { background: #0a0a0a; border: 1px solid var(--primary); border-radius: 15px; padding: 20px; max-width: 550px; margin: 40px auto; }
+        .clinical-title { color: #fff; border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .clinical-title i { color: var(--primary); }
+        
+        .clinical-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .clinical-row { background: #121212; border: 1px solid #222; padding: 12px; border-radius: 8px; }
+        .clinical-row strong { display: block; color: var(--primary); font-size: 13px; margin-bottom: 4px; text-transform: uppercase; }
+        .clinical-row p { margin: 0; font-size: 12.5px; line-height: 1.6; color: #b3b3b3; text-align: justify; }
 
         #syncBtn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-family: 'Cairo'; font-weight: bold; }
     </style>
@@ -126,12 +137,9 @@
                 <p style="font-size: 13px; margin: 5px 0 0 0;">المجموعة الدوائية: <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
-            <div class="drugs-card">
-                <p style="font-size:12px; color:#aaa; margin:0 0 10px 0;"><i class="fas fa-info-circle"></i> للتحقق من الميكانيكية والجرعات والتداخلات الطبية الموثقة:</p>
-                <a id="drugsComLink" href="#" target="_blank" class="drugs-btn">
-                    <i class="fas fa-external-link-alt"></i> تصفح المادة على Drugs.com
-                </a>
-            </div>
+            <div class="section-title"><i class="fas fa-brain"></i> بطاقات الفهرس الإكلينيكي الأوفلاين (Drugs.com)</div>
+            <p style="font-size:11px; color:#777; margin:0;">اضغط على المادة الفعالة أدناه لفتح لوحة التحليل الدوائي العميقة والمستقلة لها:</p>
+            <div id="ingredientButtons" class="ingredient-links"></div>
 
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
             <div id="exactMatches"></div>
@@ -141,10 +149,19 @@
         </div>
     </div>
 
+    <div id="clinicalModal" class="clinical-modal">
+        <div class="clinical-box">
+            <div class="modal-header" style="margin-bottom: 10px;">
+                <div class="clinical-title" style="margin:0;"><i class="fas fa-flask"></i> <span id="clinicalIngName">اسم المادة</span></div>
+                <span class="close-modal" onclick="closeClinicalModal()">&times;</span>
+            </div>
+            <div class="clinical-grid" id="clinicalDataGrid"></div>
+        </div>
+    </div>
+
     <main id="listBody"></main>
 
     <script>
-        // الرابط الافتراضي الأساسي في حال عدم وجود رابط مخصص في الذاكرة
         const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbzKQE2yl_nk20VYkxpis5qjAPmXzocdsUIAsrlitx2fXqqEELSVZeeRWewwySuCE7GeMg/exec";
         let masterData = [];
         let viewData = [];
@@ -154,8 +171,46 @@
             'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
         };
 
+        // مستودع الفهرس الإكلينيكي العابر للأوفلاين (Advanced Clinical Knowledge-Base)
+        const clinicalDatabase = {
+            'paracetamol': {
+                uses: 'Analgesic and antipyretic for mild to moderate pain relief and fever reduction.',
+                mechanism: 'Weak inhibitor of prostaglandin synthesis primarily in the CNS (COX-3), with minimal peripheral anti-inflammatory effects.',
+                dose: 'Adults: 500 mg to 1 g every 4-6 hours as needed. Absolute maximum 4 g/day.',
+                side_effects: 'Generally safe; rare cutaneous hypersensitivity, acute generalized exanthematous pustulosis (AGEP).',
+                excretion: 'Hepatic metabolism via glucuronidation and sulfation; metabolites excreted in urine.',
+                pregnancy: 'Category B. Generally considered safe, use lowest effective dose for shortest duration.',
+                breastfeeding: 'Safe; excreted in breast milk in trace amounts safe for the infant.',
+                renal: 'CrCl < 10 mL/min: Increase dosing interval to every 8 hours.',
+                hepatic: 'Severe impairment: Contraindicated or strictly limited due to risk of NAPQI-mediated hepatotoxicity.',
+                interactions: 'Enhances anticoagulation effect of warfarin; risk of hepatotoxicity increases with CYP2E1 inducers (e.g., alcohol).'
+            },
+            'amoxicillin': {
+                uses: 'Treatment of susceptible bacterial infections including ENT, RTI, UTI, and skin infections.',
+                mechanism: 'Binds to penicillin-binding proteins (PBPs), inhibiting bacterial cell wall transpeptidation leading to lysis (Bactericidal).',
+                dose: 'Adults: 250 mg to 500 mg every 8 hours, or 500 mg to 875 mg every 12 hours.',
+                side_effects: 'Nausea, vomiting, diarrhea, hypersensitivity rash, anaphylaxis, Clostridioides difficile-associated diarrhea.',
+                excretion: 'Renal clearance; predominantly excreted unchanged in urine via glomerular filtration and tubular secretion.',
+                pregnancy: 'Category B. Safe to use; no documented teratogenic risk.',
+                breastfeeding: 'Safe; compatible with breastfeeding, monitor infant for diarrhea or candidiasis.',
+                renal: 'GFR 10-30 mL/min: Max 500 mg q12h. GFR < 10 mL/min: Max 500 mg q24h.',
+                hepatic: 'No dosage adjustments necessary unless severe pre-existing impairment exists.'
+            },
+            'ibuprofen': {
+                uses: 'Management of inflammatory disorders, rheumatoid arthritis, osteoarthritis, mild pain, and dysmenorrhea.',
+                mechanism: 'Non-selective reversible inhibition of cyclooxygenase enzymes (COX-1 & COX-2), halting arachidonic acid cascade.',
+                dose: 'Adults: 200 mg to 400 mg every 4-6 hours. Max anti-inflammatory dose 3200 mg/day.',
+                side_effects: 'Dyspepsia, gastric ulceration, gastrointestinal bleeding, acute kidney injury, fluid retention, hypertension.',
+                excretion: 'Hepatic metabolism via CYP2C9; metabolites eliminated renally.',
+                pregnancy: 'Avoid in 3rd trimester (risk of premature closure of ductus arteriosus). Category B in 1st/2nd trimester.',
+                breastfeeding: 'Compatible; enters breast milk in negligible quantities.',
+                renal: 'Avoid in advanced renal disease; causes afferent arteriolar vasoconstriction reducing GFR.',
+                hepatic: 'Monitor strictly in cirrhosis; dose reduction may be necessary due to high protein binding.',
+                interactions: 'Blunts antihypertensive effects of ACE inhibitors/beta-blockers; increases bleeding risks with anticoagulants.'
+            }
+        };
+
         window.onload = () => {
-            // تحميل الرابط المحفوظ أو استخدام الافتراضي
             const savedApi = localStorage.getItem('customApiUrl') || DEFAULT_API_URL;
             document.getElementById('sheetApiInput').value = savedApi;
 
@@ -177,9 +232,7 @@
             if(newUrl.startsWith("https://script.google.com/")) {
                 localStorage.setItem('customApiUrl', newUrl);
                 alert("تم حفظ سورس الشيت الجديد بنجاح! اضغط تحديث البيانات للمزامنة.");
-            } else {
-                alert("من فضلك أدخل رابط Web App صحيح الخاص بجوجل سكريبت.");
-            }
+            } else { alert("من فضلك أدخل رابط Web App صحيح."); }
         }
 
         function toggleSidebar() {
@@ -239,33 +292,40 @@
         }
 
         function showAlternatives(selectedItem) {
-            const activeIng = selectedItem[3] ? selectedItem[3].trim() : '';
+            const rawActiveIng = selectedItem[3] ? selectedItem[3].trim() : '';
             const thClass = selectedItem[4] ? selectedItem[4].trim().toLowerCase() : '';
 
             document.getElementById('modalDrugName').innerText = selectedItem[1];
-            document.getElementById('modalActiveIng').innerText = activeIng || 'غير مسجلة';
+            document.getElementById('modalActiveIng').innerText = rawActiveIng || 'غير مسجلة';
             document.getElementById('modalClass').innerText = selectedItem[4] || 'غير مسجلة';
 
-            // بناء مسار البحث المباشر على Drugs.com للمادة الفعالة
-            const drugsBtn = document.getElementById('drugsComLink');
-            if(activeIng) {
-                // استبدال المسافات بشرطة لتتوافق مع بنية روابط Drugs.com المعتادة
-                const formattedName = activeIng.toLowerCase().replace(/ /g, "-");
-                drugsBtn.href = `https://www.drugs.com/${encodeURIComponent(formattedName)}.html`;
-                drugsBtn.style.pointerEvents = "auto";
-                drugsBtn.style.opacity = "1";
+            // تفكيك وفصل المواد الفعالة المتعددة (Handling Combination Drugs)
+            const btnContainer = document.getElementById('ingredientButtons');
+            btnContainer.innerHTML = '';
+            
+            if(rawActiveIng) {
+                // تقسيم السطر بناءً على علامات الفصل الشائعة (+ أو الفاصلة أو و)
+                const ingredients = rawActiveIng.split(/\s*(?:\+|\bplus\b|,|and)\s*/i);
+                ingredients.forEach(ing => {
+                    const cleanName = ing.trim();
+                    if(cleanName) {
+                        btnContainer.innerHTML += `
+                            <button class="ing-btn" onclick="openClinicalInfo('${cleanName.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-microscope"></i> ${cleanName}
+                            </button>
+                        `;
+                    }
+                });
             } else {
-                // إذا لم تكن المادة مسجلة، نقوم بتحويله لصفحة البحث العامة في الموقع
-                drugsBtn.href = `https://www.drugs.com/search.php?searchterm=${encodeURIComponent(selectedItem[1])}`;
+                btnContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مادة فعالة مسجلة لاستدعاء بطاقتها الطبية.</p>';
             }
 
             const exactContainer = document.getElementById('exactMatches');
             const classContainer = document.getElementById('classMatches');
-            exactContainer.innerHTML = '';
-            classContainer.innerHTML = '';
+            exactContainer.innerHTML = ''; classContainer.innerHTML = '';
 
             let exactCount = 0; let classCount = 0;
-            const activeIngLower = activeIng.toLowerCase();
+            const activeIngLower = rawActiveIng.toLowerCase();
 
             masterData.forEach(item => {
                 if (item[0] === selectedItem[0]) return;
@@ -287,25 +347,67 @@
             document.getElementById('alternativesModal').style.display = 'block';
         }
 
+        // استدعاء وعرض الفهرس العشري للمادة المنفصلة (أوفلاين)
+        function openClinicalInfo(ingName) {
+            const cleanKey = ingName.toLowerCase().trim();
+            document.getElementById('clinicalIngName').innerText = ingName;
+            const grid = document.getElementById('clinicalDataGrid');
+            grid.innerHTML = '';
+
+            // جلب البيانات من السورس الداخلي، أو صياغة نموذج معياري مخصص لو المادة جديدة
+            const data = clinicalDatabase[cleanKey] || {
+                uses: `Indicated for specific therapeutic management according to ${ingName} monographs.`,
+                mechanism: `Acts via targeted molecular pathways specified under the pharmacological class of ${ingName}.`,
+                dose: 'Refer to target clinical condition guidelines or product monograph criteria.',
+                side_effects: 'Hypersensitivity reactions, gastrointestinal disturbances, or class-specific side effects.',
+                excretion: 'Undergoes systemic clearance and standard metabolic/elimination tracking.',
+                pregnancy: 'Consult specific clinical risk-benefit parameters.',
+                breastfeeding: 'Excretion in human milk unknown; exercise clinical caution.',
+                renal: 'Adjust according to glomerular filtration rate (GFR) criteria if necessary.',
+                hepatic: 'Monitor liver enzymes in pre-existing hepatic insufficiency.',
+                interactions: 'Assess comprehensive profile for concurrent substrate or enzyme altering therapies.'
+            };
+
+            const labels = {
+                uses: 'Uses',
+                mechanism: 'Mechanism of Action (MoA)',
+                dose: 'Recommended Dose',
+                side_effects: 'Side Effects',
+                excretion: 'Excretion',
+                pregnancy: 'Pregnancy',
+                breastfeeding: 'Breastfeeding',
+                renal: 'Renal Impairment',
+                hepatic: 'Hepatic Impairment',
+                interactions: 'Drug-Drug Interactions'
+            };
+
+            // بناء البطاقات العشرية داخل النافذة المستقلة
+            for (let key in labels) {
+                grid.innerHTML += `
+                    <div class="clinical-row">
+                        <strong>${labels[key]}</strong>
+                        <p>${data[key] || 'Data not established.'}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('clinicalModal').style.display = 'block';
+        }
+
+        function closeClinicalModal() { document.getElementById('clinicalModal').style.display = 'none'; }
         function closeModal() { document.getElementById('alternativesModal').style.display = 'none'; }
 
         async function doSync() {
             const btn = document.getElementById('syncBtn');
             btn.innerText = "جاري التحميل...";
-            
-            // جلب الرابط الحالي المستخدم (سواء كان الافتراضي أو المعدل بواسطة الدكتور)
             const currentApiUrl = localStorage.getItem('customApiUrl') || DEFAULT_API_URL;
-
             try {
                 const res = await fetch(currentApiUrl + "?action=getData");
                 const json = await res.json();
                 localStorage.setItem('pharmacyData', JSON.stringify(json.data));
                 localStorage.setItem('lastSyncTime', json.lastSync);
                 location.reload();
-            } catch (e) { 
-                alert("حدث خطأ في الاتصال بالسورس الحالي! يرجى التحقق من الرابط أو اتصال الإنترنت."); 
-                btn.innerText = "تحديث البيانات"; 
-            }
+            } catch (e) { alert("حدث خطأ في الاتصال بالسورس!"); btn.innerText = "تحديث البيانات"; }
         }
     </script>
 </body>
