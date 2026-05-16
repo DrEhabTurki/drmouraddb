@@ -139,8 +139,8 @@
                 <p style="font-size: 13px; margin: 5px 0 0 0;">التوصيف الدوائي: <span id="modalClass" style="color:var(--primary);"></span></p>
             </div>
             
-            <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي المتقدم أوفلاين</div>
-            <p style="font-size:11px; color:#777; margin:0;">اضغط على المادة الفعالة لرؤية المونوغراف السريري المعتمد:</p>
+            <div class="section-title"><i class="fas fa-brain"></i> الفهرس الإكلينيكي والملاحظات</div>
+            <p style="font-size:11px; color:#777; margin:0;">اضغط بالأسفل لعرض الملاحظات الإكلينيكية المتقدمة الخاصة بالصنف:</p>
             <div id="ingredientButtons" class="ingredient-links"></div>
 
             <div class="section-title">المثائل (نفس المادة الفعالة بالظبط)</div>
@@ -154,7 +154,7 @@
     <div id="clinicalModal" class="clinical-modal">
         <div class="clinical-box">
             <div class="modal-header" style="margin-bottom: 10px;">
-                <div class="clinical-title" style="margin:0;"><i class="fas fa-flask"></i> <span id="clinicalIngName">اسم المادة</span></div>
+                <div class="clinical-title" style="margin:0;"><i class="fas fa-user-md"></i> <span id="clinicalIngName">المعلومات الإكلينيكية</span></div>
                 <span class="close-modal" onclick="closeClinicalModal()">&times;</span>
             </div>
             <div class="clinical-grid" id="clinicalDataGrid"></div>
@@ -167,38 +167,11 @@
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1vQ08P5kdfL_MOURAD_DEMO/edit";
         let masterData = [];
         let viewData = [];
+        let currentActiveItem = null;
 
         const charMap = {
             'a': 'ا', 'b': 'ب', 't': 'ت', 's': 'س', 'j': 'ج', 'h': 'ح', 'x': 'خ', 'd': 'د', 'r': 'ر', 'z': 'ز',
             'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'y': 'ي', 'g': 'ج', 'p': 'ب'
-        };
-
-        // قاعدة بيانات داخلية مصاغة باحترافية شديدة ومراجعة بمستوى Advanced Pharmacotherapy لعشر عائلات أساسية
-        const staticClinicalDB = {
-            'paracetamol': {
-                uses: 'تخفيف الآلام الخفيفة إلى المتوسطة (Analgesic) وخفض الحرارة (Antipyretic) المركزي.',
-                mechanism: 'تثبيط انتقائي لإنزيمات Cyclooxygenase في الجهاز العصبي المركزي (COX-3)، مع تأثير محيطي ضعيف جداً على البروستاجلاندينات.',
-                dose: 'البالغين: 500 مجم إلى 1 جم كل 4-6 ساعات حسب الحاجة. الحد الأقصى المطلق: 4 جم يومياً لتفادي تراكم مركب NAPQI السام.',
-                side_effects: 'آمن جداً بالجرعات العلاجية؛ فرط الجرعة يسبب فشل كبدي حاد ونخر خلايا الكبد (Hepatic Necrosis).',
-                excretion: 'استقلاب كبدي كامل (Hepatic Metabolism) عبر الاقتران بالجلوكورونيد والكبريتات؛ الإخراج كلوي للنواتج بنسبة 90%.',
-                pregnancy: 'فئة الأمان (Category B)؛ يعتبر خط الدفاع الأول المسكن والآمن تماماً خلال جميع مراحل الحمل.',
-                breastfeeding: 'آمن تماماً؛ يفرز بكميات ضئيلة جداً لا تشكل أي خطر فسيولوجي على الرضيع.',
-                renal: 'معدل الترشيح الكبيبي (GFR) أقل من 10 مل/دقيقة: يجب زيادة الفاصل الزمني بين الجرعات إلى 8 ساعات كاملة.',
-                hepatic: 'يمنع تماماً أو يقيد بحد أقصى (2 جم/يوم) في حالات القصور الكبدي الشديد أو إدمان الكحول المزمن.',
-                interactions: 'الاستخدام المتزامن المزمن بجرعات عالية يزيد من تأثير الوارفارين (Warfarin)؛ المحفزات الإنزيمية كالفينيتوين تزيد سميته.'
-            },
-            'amoxicillin': {
-                uses: 'علاج عدوى الجهاز التنفسي العلوي والسفلي، التهابات الأذن الوسطى، والمسالك البولية الحادة الناتجة عن بكتيريا حساسة.',
-                mechanism: 'مضاد حيوي مبيد للبكتيريا (Bactericidal) يثبط تصنيع الجدار الخلوي البكتيري عبر الارتباط ببروتينات PBPs.',
-                dose: 'البالغين: 500 مجم كل 8 ساعات أو 875 مجم كل 12 ساعة. الجرعة القصوى للعدوى الشديدة تصل لـ 3 جم/يوم.',
-                side_effects: 'اضطرابات هضمية (إسهال، غثيان)، طفح جلدي، نادراً ردود فعل تحسسية حادة (Anaphylaxis).',
-                excretion: 'إخراج كلوي سريع وغير متغير عبر الفلترة الكبيبية والإفراز الأنيلوبي النشط بنسبة 60-70%.',
-                pregnancy: 'فئة الأمان (Category B)؛ آمن تماماً للاستخدام أثناء الحمل وتحت الإشراف الطبي للمظاهر الإكلينيكية.',
-                breastfeeding: 'يفرز في لبن الأم؛ قد يسبب تحسس أو اضطراب في الفلورا المعوية للرضيع (إسهال أو قلاع) لكنه مقبول عموماً.',
-                renal: 'إذا كان تصفية الكرياتينين (CrCl) بين 10-30 مل/دقيقة: يعطى بحد أقصى 500 مجم كل 12 ساعة. أقل من 10 يعطى كل 24 ساعة.',
-                hepatic: 'لا يتطلب تعديل جرعات في القصور الكبدي المنفرد؛ يفرز كلوياً بشكل رئيسي.',
-                interactions: 'يقلل من فاعلية حبوب منع الحمل الفموية؛ يرتفع تركيزه في الدم عند الاستخدام المتزامن مع بروبينسيد.'
-            }
         };
 
         window.onload = () => {
@@ -305,9 +278,6 @@
             container.scrollTop = 0;
         }
 
-        // إرسال البيانات الكاملة للصنف الحالي لمعرفة محتوى العمود السادس المخصص للملاحظات المتقدمة
-        let currentActiveItem = null;
-
         function showAlternatives(selectedItem) {
             currentActiveItem = selectedItem;
             const rawActiveIng = selectedItem[3] ? selectedItem[3].trim() : '';
@@ -320,21 +290,12 @@
             const btnContainer = document.getElementById('ingredientButtons');
             btnContainer.innerHTML = '';
             
-            if(rawActiveIng) {
-                const ingredients = rawActiveIng.split(/\s*(?:\+|\bplus\b|,|and)\s*/i);
-                ingredients.forEach(ing => {
-                    const cleanName = ing.trim();
-                    if(cleanName) {
-                        btnContainer.innerHTML += `
-                            <button class="ing-btn" onclick="openClinicalInfo('${cleanName.replace(/'/g, "\\'")}')">
-                                <i class="fas fa-user-md"></i> التقرير السريري لـ ${cleanName}
-                            </button>
-                        `;
-                    }
-                });
-            } else {
-                btnContainer.innerHTML = '<p style="font-size:12px; color:#555;">لا توجد مادة فعالة لعرض الفهرس السريري.</p>';
-            }
+            // زر موحد ومباشر لعرض الملاحظة المدونة من قبلك في الشيت بالعمود السادس
+            btnContainer.innerHTML = `
+                <button class="ing-btn" onclick="openClinicalInfo()">
+                    <i class="fas fa-file-medical-alt"></i> استعراض تفاصيل الملاحظة المتقدمة للصنف
+                </button>
+            `;
 
             const exactContainer = document.getElementById('exactMatches');
             const classContainer = document.getElementById('classMatches');
@@ -363,49 +324,28 @@
             document.getElementById('alternativesModal').style.display = 'block';
         }
 
-        function openClinicalInfo(ingName) {
-            const cleanKey = ingName.toLowerCase().trim();
-            document.getElementById('clinicalIngName').innerText = ingName;
+        function openClinicalInfo() {
+            if (!currentActiveItem) return;
+            
+            document.getElementById('clinicalIngName').innerText = currentActiveItem[1];
             const grid = document.getElementById('clinicalDataGrid');
             grid.innerHTML = '';
 
-            // أولاً: فحص لو الشيت يحتوي على معلومة مخصصة مكتوبة بواسطة الدكتور في العمود السادس (الاندكس 5)
-            // شريطة أن يكون الصنف الحالي المفتوح هو نفس الصنف الذي يحتوي على المادة
-            const customSheetNote = (currentActiveItem && currentActiveItem.length >= 6 && currentActiveItem[5]) ? currentActiveItem[5].trim() : '';
+            // جلب البيانات من الاندكس 5 وهو يمثل العمود السادس (F) في شيت جوجل
+            const customSheetNote = (currentActiveItem.length >= 6 && currentActiveItem[5]) ? currentActiveItem[5].trim() : '';
 
             if (customSheetNote) {
-                // عرض مخصص للمعلومة التي قمت بصياغتها يدويًا في الشيت
                 grid.innerHTML = `
-                    <div class="clinical-row" style="border-color: var(--primary);">
-                        <strong style="font-size: 14px;"><i class="fas fa-pencil-alt"></i> معطيات الصيدلي الإكلينيكي المخصصة (من شيت جوجل):</strong>
-                        <p style="color: #fff; font-size: 14px; margin-top: 8px;">${customSheetNote}</p>
+                    <div class="clinical-row" style="border-right: 4px solid var(--primary); background: #161616;">
+                        <strong style="font-size: 14px; color: var(--primary); margin-bottom: 8px;"><i class="fas fa-notes-medical"></i> الملاحظة المتقدمة المدونة في الشيت:</strong>
+                        <p style="color: #fff; font-size: 14px; line-height: 1.7; white-space: pre-line; text-align: justify;">${customSheetNote}</p>
                     </div>
                 `;
-            } else if (staticClinicalDB[cleanKey]) {
-                // ثانياً: إذا لم تكن هناك معلومة بالشيت، نبحث في الموسوعة الداخلية الموثقة أوفلاين بمستوى Advanced Pharmacotherapy
-                const data = staticClinicalDB[cleanKey];
-                const labels = {
-                    uses: 'الاستخدامات السريرية المتقدمة (Uses)', mechanism: 'ميكانيكية العمل الجزيئية (Mechanism)',
-                    dose: 'البروتوكولات ونطاق الجرعات (Recommended Dose)', side_effects: 'الآثار العكسية والسمية الكبدية/الخلوية (Side Effects)',
-                    excretion: 'الحركية الدوائية والإخراج (Excretion & PK)', pregnancy: 'الحمل وفئة أمان الجنين (Pregnancy Category)',
-                    breastfeeding: 'إفراز المادة باللبن والرضاعة (Breastfeeding)', renal: 'معايير القصور الكلوي وتعديل الـ GFR',
-                    hepatic: 'احتياطات الفشل والقصور الكبدي (Hepatic)', interactions: 'التفاعلات والارتطامات الدوائية الحرجة (Interactions)'
-                };
-
-                for (let key in labels) {
-                    grid.innerHTML += `
-                        <div class="clinical-row">
-                            <strong>${labels[key]}</strong>
-                            <p>${data[key] || 'لم يتم تسجيل معطيات سريرية.'}</p>
-                        </div>
-                    `;
-                }
             } else {
-                // ثالثاً: الدليل الافتراضي في حال عدم وجود معلومة مخصصة أو مادة مسجلة مسبقاً
                 grid.innerHTML = `
                     <div class="clinical-row">
-                        <strong>ملاحظة هندسية حول التحديث والتحسين المستمر:</strong>
-                        <p style="color:#b3b3b3;">لتحسين وإدراج معلومات إكلينيكية بمستوى <b>Advanced Pharmacotherapy</b> خالية تماماً من الأخطاء، يمكنك ببساطة فتح شيت جوجل الخاص بك وإضافة عمود سادس <b>(العمود F)</b> واكتب فيه الملاحظات أو الجرعات الدقيقة لكل دواء. بمجرد قيامك بالضغط على "تحديث ومزامنة البيانات" ستظهر ملاحظاتك الاحترافية هنا فوراً وبشكل أوفلاين تماماً!</p>
+                        <strong>لا توجد ملاحظة مسجلة:</strong>
+                        <p style="color:#777;">العمود السادس (العمود F) الخاص بهذا الصنف فارغ حالياً في شيت جوجل. يرجى تدوين الملاحظة الإكلينيكية المتقدمة داخل الشيت ثم الضغط على زر "تحديث ومزامنة البيانات" لتظهر هنا فوراً.</p>
                     </div>
                 `;
             }
@@ -415,6 +355,43 @@
 
         function closeClinicalModal() { document.getElementById('clinicalModal').style.display = 'none'; }
         function closeModal() { document.getElementById('alternativesModal').style.display = 'none'; }
+
+        // دالة تصفيف وفصل الأسطر المتقدمة لقراءة ملف الـ CSV بدقة شديدة دون أي أخطاء
+        function parseCSV(text) {
+            let lines = [];
+            let row = [];
+            let inQuotes = false;
+            let current = '';
+
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let nextChar = text[i+1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        current += '"'; i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    row.push(current.trim());
+                    current = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') { i++; }
+                    row.push(current.trim());
+                    lines.push(row);
+                    row = [];
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            if (current || row.length > 0) {
+                row.push(current.trim());
+                lines.push(row);
+            }
+            return lines;
+        }
 
         async function doSync() {
             const btn = document.getElementById('syncBtn');
@@ -436,19 +413,10 @@
                 if(!res.ok) throw new Error("Fetch error");
                 const text = await res.text();
                 
-                const lines = text.split("\n");
+                // استخدام البارسير المتقدم لقراءة وفصل الأعمدة بدقة شديدة جداً
+                const parsedLines = parseCSV(text);
 
-                const parsedData = lines.map(line => {
-                    let result = []; let current = ''; let inQuotes = false;
-                    for (let i = 0; i < line.length; i++) {
-                        let char = line[i];
-                        if (char === '"') { inQuotes = !inQuotes; }
-                        else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
-                        else { current += char; }
-                    }
-                    result.push(current.trim());
-                    return result;
-                }).filter((row, index) => {
+                const parsedData = parsedLines.filter((row, index) => {
                     if (index === 0) {
                         const firstCell = row[0] ? row[0].toLowerCase() : '';
                         if (firstCell.includes('كود') || firstCell.includes('code') || firstCell.includes('الرقم')) {
@@ -466,11 +434,11 @@
                     localStorage.setItem('lastSyncTime', timeStr);
                     location.reload();
                 } else {
-                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة.");
+                    alert("لم نجد بيانات صالحة! تأكد من مطابقة الأعمدة في الشيت.");
                     btn.innerText = "تحديث البيانات";
                 }
             } catch (e) { 
-                alert("فشلت المزامنة! تأكد أن الشيت متاح للعامة (Viewer)."); 
+                alert("فشلت المزامنة! تأكد أن الشيت متاح للعامة بصلاحية (Viewer)."); 
                 btn.innerText = "تحديث البيانات"; 
             }
         }
