@@ -290,7 +290,6 @@
             const btnContainer = document.getElementById('ingredientButtons');
             btnContainer.innerHTML = '';
             
-            // زر موحد ومباشر لعرض الملاحظة المدونة من قبلك في الشيت بالعمود السادس
             btnContainer.innerHTML = `
                 <button class="ing-btn" onclick="openClinicalInfo()">
                     <i class="fas fa-file-medical-alt"></i> استعراض تفاصيل الملاحظة المتقدمة للصنف
@@ -331,7 +330,6 @@
             const grid = document.getElementById('clinicalDataGrid');
             grid.innerHTML = '';
 
-            // جلب البيانات من الاندكس 5 وهو يمثل العمود السادس (F) في شيت جوجل
             const customSheetNote = (currentActiveItem.length >= 6 && currentActiveItem[5]) ? currentActiveItem[5].trim() : '';
 
             if (customSheetNote) {
@@ -345,7 +343,7 @@
                 grid.innerHTML = `
                     <div class="clinical-row">
                         <strong>لا توجد ملاحظة مسجلة:</strong>
-                        <p style="color:#777;">العمود السادس (العمود F) الخاص بهذا الصنف فارغ حالياً في شيت جوجل. يرجى تدوين الملاحظة الإكلينيكية المتقدمة داخل الشيت ثم الضغط على زر "تحديث ومزامنة البيانات" لتظهر هنا فوراً.</p>
+                        <p style="color:#777;">العمود السادس (العمود F) الخاص بهذا الصنف فارغ حالياً في شيت جوجل، أو لم يتم إتمام المزامنة بنجاح بعد كتابته. يرجى الضغط على زر "تحديث ومزامنة البيانات" في القائمة الجانبية للتأكيد.</p>
                     </div>
                 `;
             }
@@ -356,40 +354,20 @@
         function closeClinicalModal() { document.getElementById('clinicalModal').style.display = 'none'; }
         function closeModal() { document.getElementById('alternativesModal').style.display = 'none'; }
 
-        // دالة تصفيف وفصل الأسطر المتقدمة لقراءة ملف الـ CSV بدقة شديدة دون أي أخطاء
         function parseCSV(text) {
-            let lines = [];
-            let row = [];
-            let inQuotes = false;
-            let current = '';
-
+            let lines = []; let row = []; let inQuotes = false; let current = '';
             for (let i = 0; i < text.length; i++) {
-                let char = text[i];
-                let nextChar = text[i+1];
-
+                let char = text[i]; let nextChar = text[i+1];
                 if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        current += '"'; i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
+                    if (inQuotes && nextChar === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; }
                 } else if (char === ',' && !inQuotes) {
-                    row.push(current.trim());
-                    current = '';
+                    row.push(current.trim()); current = '';
                 } else if ((char === '\r' || char === '\n') && !inQuotes) {
                     if (char === '\r' && nextChar === '\n') { i++; }
-                    row.push(current.trim());
-                    lines.push(row);
-                    row = [];
-                    current = '';
-                } else {
-                    current += char;
-                }
+                    row.push(current.trim()); lines.push(row); row = []; current = '';
+                } else { current += char; }
             }
-            if (current || row.length > 0) {
-                row.push(current.trim());
-                lines.push(row);
-            }
+            if (current || row.length > 0) { row.push(current.trim()); lines.push(row); }
             return lines;
         }
 
@@ -406,14 +384,14 @@
             }
             
             const sheetId = matches[1];
-            const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+            // إضافة مَعلَمَة النطاق إجبارياً &range=A:F لضمان جلب العمود السادس كاملاً
+            const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&range=A:F`;
 
             try {
                 const res = await fetch(directCsvUrl);
                 if(!res.ok) throw new Error("Fetch error");
                 const text = await res.text();
                 
-                // استخدام البارسير المتقدم لقراءة وفصل الأعمدة بدقة شديدة جداً
                 const parsedLines = parseCSV(text);
 
                 const parsedData = parsedLines.filter((row, index) => {
